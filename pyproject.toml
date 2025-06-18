@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "asym-bin-merger"
+version = "0.1.0"
+dynamic = ["version"]
+description = 'A tool for getting stat uncertainty-optimized asymmetric bin mergings'
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Ethan Cannaert, ", email = "emcannaert@ucdavis.edu" },
+{ name = "Mayuri Kawale, ", email = "mayuri.kawale-1@ou.edu" },
+{ name = "Elias Mettner, ", email = "emettner@wisc.edu" },
+{ name = "Ashling Quinn, ", email = "aq3942@princeton.edu" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pre-commit",
+        "ruff",
+        "black"
+]
+test = [
+        "pytest"
+]
+
+[project.urls]
+Documentation = "https://github.com/U.N. Owen/asym-bin-merger#readme"
+Issues = "https://github.com/U.N. Owen/asym-bin-merger/issues"
+Source = "https://github.com/U.N. Owen/asym-bin-merger"
+
+[tool.hatch.version]
+path = "src/asym_bin_merger/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/asym_bin_merger tests}"
+
+[tool.coverage.run]
+source_pkgs = ["asym_bin_merger", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/asym_bin_merger/__about__.py",
+]
+
+[tool.coverage.paths]
+asym_bin_merger = ["src/asym_bin_merger", "*/asym-bin-merger/src/asym_bin_merger"]
+tests = ["tests", "*/asym-bin-merger/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+extend-select = ["B", "I", "RUF", "UP"]  # Adds Bugbear, isort, Ruff-specific, PyUpgrade
+
+[tool.ruff.lint]
+extend-select = ["E", "F", "W", "B", "I", "RUF", "UP"]
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+
+
