@@ -1,12 +1,13 @@
 # asym-bin-merger
 
-[![PyPI - Version](https://img.shields.io/pypi/v/asym-bin-merger.svg)](https://pypi.org/project/asym-bin-merger)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/asym-bin-merger.svg)](https://pypi.org/project/asym-bin-merger)
+#[![PyPI - Version](https://img.shields.io/pypi/v/asym-bin-merger.svg)](https://pypi.org/project/asym-bin-merger)
+#[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/asym-bin-merger.svg)](https://pypi.org/project/asym-bin-merger)
 
 -----
 
 ## Table of Contents
 - [Description]
+
 Inputs:       numpy arrays → flipped relative to normal lists, stretch: root histograms
 Outputs:   text file: [ [(i1,j1), (i2,j2,), ... ], [], []    ]
 can be written as [ superbin1 = ( bin1, bin2, bin3, ... ), superbin2 = (binx, biny, binz, ...), ... ]

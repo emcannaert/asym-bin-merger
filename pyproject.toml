@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "asym-bin-merger"
 version = "0.1.0"
-dynamic = ["version"]
+dynamic = []
 description = 'A tool for getting stat uncertainty-optimized asymmetric bin mergings'
 readme = "README.md"
 requires-python = ">=3.8"
@@ -28,7 +28,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = []
+dependencies = ["numpy"]
 
 [project.optional-dependencies]
 dev = ["pre-commit",
@@ -36,13 +36,11 @@ dev = ["pre-commit",
         "black"
 ]
 test = [
-        "pytest"
+        "pytest",
+	"numpy"
 ]
 
 [project.urls]
-Documentation = "https://github.com/U.N. Owen/asym-bin-merger#readme"
-Issues = "https://github.com/U.N. Owen/asym-bin-merger/issues"
-Source = "https://github.com/U.N. Owen/asym-bin-merger"
 
 [tool.hatch.version]
 path = "src/asym_bin_merger/__about__.py"
