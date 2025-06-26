@@ -2,3 +2,4 @@
 **/*.txt
 **/*.pkl
 **/*.pyc
+uv.lock
