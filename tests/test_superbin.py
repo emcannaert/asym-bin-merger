@@ -12,7 +12,7 @@ superbin_cases = {
         ]),
         "merged_contents": [
             [(0,0)], [(0,1)], [(0,2)],
-            [(1,0)], [(1,2)],
+            [(1,0)], [(1,1)], [(1,2)],
             [(2,0)], [(2,1)], [(2,2)]
         ]
     },
@@ -34,7 +34,11 @@ superbin_cases = {
             [1, 1, 1],
             [1, 1, 1]
         ]),
-        "merged_contents": []
+        "merged_contents": [
+            [(0,0)], [(0,1)], [(0,2)],
+            [(1,0)], [(1,1)], [(1,2)],
+            [(2,0)], [(2,1)], [(2,2)]
+        ]
     },
     "TC4_random_bad_bins": {
         "bin_contents": np.array([
@@ -43,8 +47,9 @@ superbin_cases = {
             [2, 50, 1]
         ]),
         "merged_contents": [
-            [(0,0)],  [(0,2)],
-            [(2,1)]
+            [(0,0)], [(0,1)], [(0,2)],
+            [(1,0)], [(1,1)], [(1,2)],
+            [(2,0)], [(2,1)], [(2,2)]
         ]
     },
 }
@@ -58,7 +63,7 @@ badbin_cases = {
             [20, 20, 20]
         ]),
         "merged_contents": [
-            (1,1)
+            [(1,1)]
         ]
     },
     "TC2_no_bad_bin_center": {
@@ -76,9 +81,9 @@ badbin_cases = {
             [1, 1, 1]
         ]),
         "merged_contents": [
-            (0,0), (0,1), (0,2),
-            (1,0), (1,1), (1,2),
-            (2,0), (2,1), (2,2)
+            [(0,0)], [(0,1)], [(0,2)],
+            [(1,0)], [(1,1)], [(1,2)],
+            [(2,0)], [(2,1)], [(2,2)]
         ]
     },
     "TC4_random_bad_bins": {
@@ -88,7 +93,7 @@ badbin_cases = {
             [2, 50, 1]
         ]),
         "merged_contents": [
-            (1,0), (0,1), (1,1), (2,2), (2,0), (1,2)
+            [(1,0)], [(0,1)], [(1,1)], [(2,2)], [(2,0)], [(1,2)]
         ]
     },
 }
@@ -105,7 +110,7 @@ def test_init_superbin_indices(name, case):
 @pytest.mark.parametrize("name, case", badbin_cases.items())
 def test_get_bad_bins(name, case):
     merger = AsymBinMerger(hist=case["bin_contents"], max_stat_uncert=0.25, output_dir="bin_maps/", debug = True)
+    merger._init_superbin_indices()
     bad_bins = merger._get_bad_bins()
 
     assert bad_bins == case["merged_contents"]
-
