@@ -75,7 +75,7 @@ more_test_cases = {
 
 @pytest.mark.parametrize("name, case", test_cases.items())
 def test_bin_merging(name, case):
-    merger = AsymBinMerger(hist=["bin_contents"], max_stat_uncert=0.25, output_dir="bin_maps/", debug = True)
+    merger = AsymBinMerger(hist=case["bin_contents"], max_stat_uncert=0.25, output_dir="bin_maps/", debug = True)
     merger._run()
     assert np.array_equal(merger._get_merged_hist(), case["merged_contents"]) == True
     np.testing.assert_array_equal(merger._get_merged_hist(), case["merged_contents"])

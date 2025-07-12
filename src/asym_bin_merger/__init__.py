@@ -31,13 +31,12 @@ class AsymBinMerger:
         self.file_name = "bin_map.txt"
         self.output_file = os.path.join(self.output_dir, self.file_name)
         self.final_hist = np.zeros((5,5)) # placeholder for final hist
-        self.debug = debug
 
         #check inputs
         self._validate_inputs()
 
         #run main workflow
-        if not debug: 
+        if not debug:
             self._run()
             self._write_output()
         else:
@@ -52,9 +51,41 @@ class AsymBinMerger:
         return []
     
     def _init_superbin_indices(self) -> list: # initialize the superbin index list
-        # TODO
-        return []
-    
+        # Identify bins that are already under the max_stat_uncert threshold
+        # and set them as their own superbins. Superbins are initialized as a list of lists, 
+        # where each inner list contains the indices of bins that are merged together.
+        if self.debug:
+            if isinstance(self.hist, np.ndarray):
+                # For debug mode, assume hist is a numpy array
+                # For each bin, check if the statistical uncertainty is below the threshold
+                superbins = []
+                for i in range(self.hist.shape[0]):
+                    for j in range(self.hist.shape[1]):
+                        bin_content = self.hist[i, j]
+                        bin_error = np.sqrt(bin_content)  # or however you compute error
+                        if bin_error / bin_content < self.max_stat_uncert:
+                            superbins.append([(i, j)])
+            else:
+                raise TypeError("In debug mode, `hist` must be a numpy array.")
+        elif isinstance(self.hist, ROOT.TH2):
+            # For ROOT histograms, we need to iterate through the bins
+            superbins = []
+            for i in range(1, self.hist.GetNbinsX() + 1):
+                for j in range(1, self.hist.GetNbinsY() + 1):
+                    bin_content = self.hist.GetBinContent(i, j)
+                    bin_error = self.hist.GetBinError(i, j)
+                    if bin_error / bin_content < self.max_stat_uncert:
+                        superbins.append([(i, j)])
+        else:
+            raise TypeError("`hist` must be a ROOT.TH2 object or a numpy array in debug mode.")
+        # If no bins are under the threshold, return an empty list
+        if not superbins:
+            print("No bins under the max_stat_uncert threshold. Returning empty superbins list.")
+            return []
+        else:
+            print(f"Initialized superbins with {len(superbins)} entries.")
+        return superbins
+
     def _check_superbins(self): # check whether there are problems with final superbins
         # TODO
         print("Checking bin map for issues.")
@@ -84,7 +115,34 @@ class AsymBinMerger:
         return
     
     def _get_bad_bins(self) -> list:# return list (by decreasing stat uncert) of current "bad" bins 
-        # TODO
+        # identify all bins which are above the max_stat_uncert threshold and return their coordinates in a list ordered by decreasing statistical uncertainty
+        if self.debug:
+            if isinstance(self.hist, np.ndarray):
+                # For debug mode, assume hist is a numpy array
+                bad_bins = []
+                for i in range(self.hist.shape[0]):
+                    for j in range(self.hist.shape[1]):
+                        bin_content = self.hist[i, j]
+                        bin_error = np.sqrt(bin_content) 
+                        if bin_error / bin_content > self.max_stat_uncert:
+                            bad_bins.append((i, j, bin_error / bin_content))
+                # Sort by decreasing statistical uncertainty
+                bad_bins.sort(key=lambda x: x[2], reverse=True)
+                return [(i, j) for i, j, _ in bad_bins]
+            else:
+                raise TypeError("In debug mode, `hist` must be a numpy array.")
+        elif isinstance(self.hist, ROOT.TH2):
+            # For ROOT histograms, we need to iterate through the bins
+            bad_bins = []
+            for i in range(1, self.hist.GetNbinsX() + 1):
+                for j in range(1, self.hist.GetNbinsY() + 1):
+                    bin_content = self.hist.GetBinContent(i, j)
+                    bin_error = self.hist.GetBinError(i, j)
+                    if bin_error / bin_content > self.max_stat_uncert:
+                        bad_bins.append((i, j, bin_error / bin_content))
+            # Sort by decreasing statistical uncertainty
+            bad_bins.sort(key=lambda x: x[2], reverse=True)
+            return [(i, j) for i, j, _ in bad_bins]
         return []
 
     def _get_neighbor_bins(self) -> list: # return list (by decreasing stat uncert) of neighbor superbins
@@ -107,7 +165,7 @@ class AsymBinMerger:
     ## testing and meta functions
     def _validate_inputs(self):
         if self.debug:
-            if not isinstance(self.hist, list) and not isinstance(self.hist, np.array):
+            if not isinstance(self.hist, list) and not isinstance(self.hist, np.ndarray):
                 raise TypeError("In debug mode `hist` must be a np.array or list object.")
         else:
             if not isinstance(self.hist, ROOT.TH2):
