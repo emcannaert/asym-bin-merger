@@ -87,8 +87,36 @@ class AsymBinMerger:
         return
     
     def _run_bin_merging(self): # run main bin merging scheme
-        # TODO
-        print("Run bin merging scheme.")
+        
+        # init bad_bins
+        bad_bin_nums,_ = self._get_bad_bins()
+        it_num = 0
+
+        print("Running bin merging sequence.")
+        
+        while len(bad_bins) > 0:
+
+            # get largest stat uncert superbin number
+            bad_bin_num = bad_bin_nums[0]
+
+            # get list of neighbors 
+            bad_neighbor_nums = self._get_neighbor_bins(bad_bin)
+            if not bad_neighbor_nums:
+                raise ValueError("(Iteration %s) No neighbor superbins found for superbin number %s with superbins indices %s."%(it_num, bad_bin_num, self.superbin_indices))
+
+            bad_neighbor_num = bad_neighbor_nums[0]
+
+            # add bad bin into 'worst' neighbor
+            self.superbin_indices[bad_neighbor_num].extend(self.superbin_indices[bad_bin_num])
+
+            # remove bad bin from superbin_indices
+            self.superbin_indices.pop(bad_neighbor_num)
+
+            # update bad bins list for next iteration
+            bad_bin_nums,_ = self._get_bad_bins()
+            it_num+=1
+        print("Finished bin merging sequence - took %s iterations."%(it_num))
+
         return
 
     def _write_output(self): # write bin map to self.output_file
@@ -143,7 +171,7 @@ class AsymBinMerger:
             print(f"Found {len(bad_bins)} bad bins exceeding the max_stat_uncert threshold in ROOT histogram.")
         return bad_bins  # return list of bad bins, each represented as a list of indices
 
-    def _get_neighbor_bins(self) -> list: # return list (by decreasing stat uncert) of neighbor superbins
+    def _get_neighbor_bins(self, bad_index) -> list: # return list (by decreasing stat uncert) of neighbor superbin indices
         return []
 
     def print_bin_map(self): # helper for testing and checking merging process

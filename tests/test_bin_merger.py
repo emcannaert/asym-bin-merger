@@ -2,74 +2,67 @@ import numpy as np
 import pytest
 from asym_bin_merger import AsymBinMerger 
 
-test_cases = {
+test_cases_with_bottom_left_origin = {
     "TC1_one_bad_bin_center": {
         "bin_contents": np.array([
             [20, 20, 20],
             [20,  1, 20],
             [20, 20, 20]
-        ]),
-        "merged_contents": np.array([
-            [20, 20, 20],
-            [20, 21, 20],
-            [20, 21, 20]
+        ]),  # row 0 = bottom
+        "superbin_labels": np.array([
+            [0, 1, 2],
+            [3, 6, 4],
+            [5, 6, 7]
         ])
     },
-}
-
-more_test_cases = {
-	"TC5_snake_bad_path": {
-    	# Bad bins form a zig-zag "snake" that should cluster together
-    	"bin_contents": np.array([
-        	[50,  1, 50],
-        	[ 1,  1,  1],
-        	[50,  1, 50]
-    	]),
-    	"merged_contents": np.array([
-        	[50, 17, 50],
-        	[17, 17, 17],
-        	[50, 17, 50]
-    	])
-	},
-	"TC6_corner_spill": {
-    	# Central cluster is bad, merges into adjacent good corner
-    	"bin_contents": np.array([
-        	[25,  2, 25],
-        	[ 2,  1,  2],
-        	[25,  2, 25]
-    	]),
-    	"merged_contents": np.array([
-        	[25, 32, 25],
-        	[32, 32, 32],
-        	[25, 32, 25]
-    	])
-	},
-	"TC7_uniform_low_3x3": {
-    	# Uniform values below threshold, expect merging into blocks
-    	"bin_contents": np.array([
-        	[10, 10, 10],
-        	[10, 10, 10],
-        	[10, 10, 10]
-    	]),
-    	"merged_contents": np.array([
-        	[20, 20, 20],
-        	[20, 20, 20],
-        	[20, 20, 20]
-    	])
-	},
-	"TC8_bad_ring_around_good_center": {
-    	# Good bin in center, bad ring around it should not disturb center
-    	"bin_contents": np.array([
-        	[ 2,  2,  2],
-        	[ 2, 20,  2],
-        	[ 2,  2,  2]
-    	]),
-    	"merged_contents": np.array([
-        	[10, 10, 10],
-        	[10, 20, 10],
-        	[10, 10, 10]
-    	])
-	},
+    "TC5_snake_bad_path": {
+        "bin_contents": np.array([
+            [50,  1, 50],
+            [ 1,  1,  1],
+            [50,  1, 50]
+        ]),
+        "superbin_labels": np.array([
+            [0, 3, 1],
+            [3, 3, 3],
+            [2, 3, 3]
+        ])
+    },
+    "TC6_corner_spill": {
+        "bin_contents": np.array([
+            [25,  2, 25],
+            [ 2,  1,  2],
+            [25,  2, 25]
+        ]),
+        "superbin_labels": np.array([
+            [0, 3, 1],
+            [3, 3, 3],
+            [2, 3, 3]
+        ])
+    },
+    "TC7_uniform_low_3x3": {
+        "bin_contents": np.array([
+            [10, 10, 10],
+            [10, 10, 10],
+            [10, 10, 10]
+        ]),
+        "superbin_labels": np.array([
+            [1, 0, 0],
+            [1, 2, 2],
+            [1, 3, 3]
+        ])
+    },
+    "TC8_bad_ring_around_good_center": {
+        "bin_contents": np.array([
+            [ 2,  2,  2],
+            [ 2, 20,  2],
+            [ 2,  2,  2]
+        ]),
+        "superbin_labels": np.array([
+            [0, 0, 0],
+            [0, 1, 0],
+            [0, 0, 0]
+        ])
+    },
 }
 
 
