@@ -81,9 +81,9 @@ badbin_cases = {
             [1, 1, 1]
         ]),
         "merged_contents": [
-            [(0,0)], [(0,1)], [(0,2)],
-            [(1,0)], [(1,1)], [(1,2)],
-            [(2,0)], [(2,1)], [(2,2)]
+            [(1,1)], [(2,1)], [(1,2)],
+            [(1,0)], [(0,1)], [(2,2)],
+            [(2,0)], [(0,2)], [(0,0)]
         ]
     },
     "TC4_random_bad_bins": {
@@ -93,7 +93,7 @@ badbin_cases = {
             [2, 50, 1]
         ]),
         "merged_contents": [
-            [(1,0)], [(0,1)], [(1,1)], [(2,2)], [(2,0)], [(1,2)]
+            [(1,0)], [(1,1)], [(0,1)], [(2,2)], [(2,0)], [(1,2)]
         ]
     },
 }
@@ -111,6 +111,5 @@ def test_init_superbin_indices(name, case):
 def test_get_bad_bins(name, case):
     merger = AsymBinMerger(hist=case["bin_contents"], max_stat_uncert=0.25, output_dir="bin_maps/", debug = True)
     merger._init_superbin_indices()
-    bad_bins = merger._get_bad_bins()
-
-    assert bad_bins == case["merged_contents"]
+    bad_bin_indices, bad_bin_nums = merger._get_bad_bins()
+    assert bad_bin_indices == case["merged_contents"]
