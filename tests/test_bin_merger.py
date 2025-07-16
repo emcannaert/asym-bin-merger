@@ -66,7 +66,7 @@ test_cases_with_bottom_left_origin = {
 }
 
 
-@pytest.mark.parametrize("name, case", test_cases.items())
+@pytest.mark.parametrize("name, case", test_cases_with_bottom_left_origin.items())
 def test_bin_merging(name, case):
     merger = AsymBinMerger(hist=case["bin_contents"], max_stat_uncert=0.25, output_dir="bin_maps/", debug = True)
     merger._run()
