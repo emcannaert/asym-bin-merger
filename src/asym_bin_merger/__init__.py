@@ -111,8 +111,38 @@ class AsymBinMerger:
         return superbins
 
     def _check_superbins(self): # check whether there are problems with final superbins
-        # TODO
         print("Checking bin map for issues.")
+        
+        # Check if superbin_indices is a list of lists
+        if not all(isinstance(superbin, list) for superbin in self.superbin_indices):
+            raise TypeError("superbin_indices must be a list of lists.")
+        
+        # Check if there are any empty superbins    
+        # This is a simple check, but it can be extended to more complex checks if needed
+        empty_superbins = [superbin for superbin in self.superbin_indices if not superbin]
+        if empty_superbins:
+            print(f"Warning: Found {len(empty_superbins)} empty superbins. These will be ignored in the merging process.")
+            # Optionally, remove empty superbins from the list
+            self.superbin_indices = [superbin for superbin in self.superbin_indices if superbin]
+        
+        # check if there are any issues with the superbin indices
+        if not self.superbin_indices:
+            raise Exception("No superbins initialized. Please run _init_superbin_indices() first.")
+        
+        # Check if all bins in superbin_indices are valid
+        for superbin in self.superbin_indices:
+            for bin_index in superbin:
+                if self.debug:
+                    # In debug mode, assume hist is a numpy array
+                    if not (0 <= bin_index[0] < self.hist.shape[0] and 0 <= bin_index[1] < self.hist.shape[1]):
+                        raise Exception(f"Invalid bin index {bin_index} in superbin {superbin}.")
+                else:
+                    # For ROOT histograms, check if the bin index is valid
+                    if not (1 <= bin_index[0] <= self.hist.GetNbinsX() and 1 <= bin_index[1] <= self.hist.GetNbinsY()):
+                        raise Exception(f"Invalid bin index {bin_index} in superbin {superbin}.")
+                    
+        print("Superbins check completed successfully. No issues found.")
+        # If all checks pass, return successfully
         return
     
     def _run_bin_merging(self): # run main bin merging scheme
@@ -149,8 +179,14 @@ class AsymBinMerger:
 
         return
 
-    def _write_output(self): # write bin map to self.output_file
-        # TODO
+    def _write_output(self): 
+        ## write bin map to self.output_file
+        #if not self.superbin_indices:
+        #    print("No superbins to write. Please run _run_bin_merging() first.")
+        #    return
+        #if not os.path.exists(self.output_dir):
+        #    os.makedirs(self.output_dir)
+        #
         print("Writing output to %s."%(self.output_file))
         return
     
