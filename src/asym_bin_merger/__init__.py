@@ -108,8 +108,8 @@ class AsymBinMerger:
         it_num = 0
 
         print("Running bin merging sequence.")
-        
         while len(bad_bin_indices) > 0:
+
 
             # get largest stat uncert superbin number
             bad_bin_num = bad_bin_nums[0]
@@ -151,6 +151,7 @@ class AsymBinMerger:
 
     def _print_help(self): # give information about usage
         # TODO
+        print("Hello world.")
         return
     
     def _get_bad_bins(self) -> list:

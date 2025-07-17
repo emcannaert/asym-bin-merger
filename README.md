@@ -1,68 +1,166 @@
-# asym-bin-merger
+# AsymBinMerger
 
-#[![PyPI - Version](https://img.shields.io/pypi/v/asym-bin-merger.svg)](https://pypi.org/project/asym-bin-merger)
-#[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/asym-bin-merger.svg)](https://pypi.org/project/asym-bin-merger)
+**AsymBinMerger** is a Python plugin/class designed to process 2D ROOT histograms (`TH2F`) by merging input TH2F bins into "superbins" such that **no resulting output superbin has a fractional statistical uncertainty above a specified threshold**, while **maximizing the number of bins retained**.
 
------
+This is particularly useful for analyses that require high-statistics binning in 2D phase space where this process is non-trivial.
 
-## Table of Contents
-- [Description]
+---
 
-Inputs:       numpy arrays → flipped relative to normal lists, stretch: root histograms
-Outputs:   text file: [ [(i1,j1), (i2,j2,), ... ], [], []    ]
-can be written as [ superbin1 = ( bin1, bin2, bin3, ... ), superbin2 = (binx, biny, binz, ...), ... ]
-→ bin1 = (x1,y1)
-stretch: add conversion to colored histogram, JSON?
+## Features
 
-Workflow: 
-STRETCH: compare different algorithms
-STRETCH: implement for multiple backgrounds
+- Merges bins based on **fractional statistical uncertainty** (`1/√counts`)
+- Respects 2D histogram topology using **adjacent neighbor merging**
+- "x-biased" tie-breaking ensures **deterministic, reproducible** results
+- Outputs:
+  - Post-merged `TH2F` histogram
+  - Superbin-to-bin mapping
+  - Diagnostic plots
 
-1. accept ROOT histograms,  old: (Accept numpy arrays as pkl)
-2. Run bin merging scheme
-    1. while len(bad_bins) > 0:
-    2. identify "bad" bins = bins with stat uncertainty > some threshold
+---
 
-        * loop over all bins
-            * calculate the stat uncertainty in each bin
-    * choose a bad bin
-        * choose randomly, from highest stat uncertainty to lowest, or lowest to highest
-    * look at the neighbors of bad bin
-        * STRETCH: add in some type of weight based on distance to neighbor centroids
-    * add neighbor bin with the highest stat uncertainty with bad bin 
-    * remove neighbor bin w/ highest stat uncertainty
-        * STRETCH: try to "complete" a bad bin before moving on to another
-        * STRETCH: fill in holes
+## Algorithm Overview
 
-1. Output bin map 
+### Inputs
 
+- `ROOT.TH2F` histogram
+- `float`: maximum fractional statistical uncertainty (`max_stat_uncert`)
+- `str` *(optional)*: output directory for files and plots, default is "merged_bins/"
 
-Classes: 
-bin_calculator → inputs: stat uncertainty threshold, histograms, location of output text file 
-hist_container → histograms & weigh
+### Merging Procedure
 
-List of methods: 
-* help
-    * STRETCH: text interface 
-* convert_root_to_list: takes in 2D histogram, returns corresponding numpy list
-* init superbin: loop over all bins in 2D bins and create 1D list of superbins from these:
-    * superbins_indices = [ [1], [2], [3]  ]   → bin1.extend(bin2)
-* run_bin_merging
-* identify bad bins: returns SORTED python list of superbin indices of "bad" bins
-* get list of neighbor bins: for given superbin, get SORTED (by stat uncertainty) list of neighbor bins → do we want all superbins that border any bin in the current superbin?
-* output final bin map: create a text file at the specified output location
+1. **Initialize** each bin as its own superbin.
+2. **Identify bad bins**: superbins whose uncertainty exceeds the threshold.
+3. **Choose the "worst" bad superbin using**:
+     1. Highest fractional uncertainty
+     2. Superbin centroid furthest from (0,0)
+     3. Larger `x` coordinate, then larger `y` if tied
+4. **Merge** the bad superbin into a **neighboring superbin**:
+   - Select the neighbor with:
+     1. Highest fractional uncertainty
+     2. Furthest centroid from origin (0,0), favoring larger `x`, then `y`
+5. **Update**: Recalculate list of "bad" superbins and repeat from 3 until no bad bins remain.
 
+### Notes
 
+- Neighbors are defined as superbins that have at least one constituent that is adjacent (up/down/left/right) to at least one constituent of the candidate superbin.
+- Tie-breaking rules ensure **deterministic x-biased merging**.
 
-- [Installation](#installation)
-- [License](#license)
+---
+
+## Example Usage
+
+```python
+from asym_bin_merger import AsymBinMerger
+import ROOT
+
+# Open ROOT file and retrieve histogram
+r_file = ROOT.TFile.Open("path_to_hist.root", "READ")
+hist = r_file.Get("my_histogram")  # Ensure it's a TH2F
+
+# Merge with max stat uncertainty of 25%
+bin_merger = AsymBinMerger(hist, 0.25, "merged_hist")
+
+# Retrieve outputs
+merged_hist = bin_merger.get_merged_hist()
+superbin_indices = bin_merger.get_bin_map()
+
+# Plot diagnostics
+bin_merger.plot_merged_hist()
+```
+
+---
+
+## Output Files
+
+Stored in the `output_dir` (e.g. `"merged_hist"`):
+
+- `bin_map.txt`: A list of lists with format:
+
+  ```python
+  [
+    [(i1, j1), (i2, j2), ...],  # Superbin 0
+    [(k1, l1), (k2, l2), ...],  # Superbin 1
+    ...
+  ]
+  ```
+
+- `merged_hist.root`: ROOT file containing the merged histogram
+
+- Diagnostic plots:
+  - `pre_merge_hist.png`: Original histogram
+  - `post_merge_hist.png`: Post-merged histogram
+  - `bin_map.png`: Visual representation of bin groupings
+  - `stat_uncert_post_merge.png`: Post-merge uncertainty map
+
+---
 
 ## Installation
 
-```console
-pip install asym-bin-merger
+This package uses [`uv`](https://github.com/astral-sh/uv) for environment and dependency management. 
+
+> **Note:** `ROOT` must be installed **separately** on your system (e.g., via [conda](https://root.cern/install/) or prebuilt binaries). This tool **requires** a working Python-compatible ROOT environment (`import ROOT` must work).
+
+### Dependencies
+
+- `numpy`
+- `os` (standard library)
+- `ROOT` *(not installable via `uv`)*
+
+### Setup Instructions
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/asym-bin-merger.git
+cd asym-bin-merger
+
+# Create and enter a uv virtual environment
+uv venv
+source .venv/bin/activate
+
+# Install Python dependencies
+uv pip install -r requirements.txt
 ```
+
+
+---
+
+## API Reference
+
+### `AsymBinMerger(hist: ROOT.TH2F, max_stat_uncert: float, output_dir: str = None)`
+
+Initializes the merger and performs bin merging.
+
+### `.get_merged_hist() -> ROOT.TH2F`
+
+Returns the post-merged histogram.
+
+### `.get_bin_map() -> list[list[tuple[int, int]]]`
+
+Returns the bin grouping (superbin) structure.
+
+### `.plot_merged_hist()`
+
+Generates plots and saves them in the output directory.
+
+
+---
+
+## FAQ
+
+**Q:** What happens if two bins have equal uncertainty and distance from the origin?  
+**A:** The algorithm prefers the bin with **larger x**, then **larger y** coordinate to ensure deterministic merging. This algorithm is therefore "x-biased". 
+
+**Q:** Can I use this with histograms that contain empty bins?  
+**A:** Yes. Empty bins (with zero entries) are treated as having infinite uncertainty and are prioritized for early merging.
+
+---
 
 ## License
 
-`asym-bin-merger` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
+MIT License
+
+---
+
+## 🤝 Acknowledgments
+
+Developed by Ethan Cannaert, Mayuri Kawale, Elias Mettner, and Ashling Quinn for use in high-statistics ROOT-based 2D analyses.
