@@ -46,8 +46,17 @@ class AsymBinMerger:
 
 
     ## Main methods
-    def _convert_hist(self) -> list:  # convert hist to 2D array for easier handling, also set final_hist
-        # Convert the ROOT histogram to a 2D numpy array for easier handling
+    def _convert_hist(self) -> list:
+        """
+        Convert the ROOT histogram to a 2D NumPy array for easier handling.
+        Also sets self.final_hist.
+        
+        Returns: 
+            A 2D NumPy array.
+        
+        Raises:
+            TypeError: If `hist` is not a NumPy array in debug mode or not a ROOT.TH2 histogram otherwise.
+        """  
         if self.debug:
             if isinstance(self.hist, np.ndarray):
                 # If hist is already a numpy array, just return it
@@ -63,7 +72,9 @@ class AsymBinMerger:
                 for j in range(1, n_bins_y + 1):
                     hist_array[i - 1, j - 1] = self.hist.GetBinContent(i, j)
             self.final_hist = hist_array
-        return []
+            return self.final_hist
+        else:
+            raise TypeError("`hist` must be a ROOT.TH2 object or a numpy array in debug mode.")
     
     def _init_superbin_indices(self) -> list: # initialize the superbin index list
         # Identify bins that are already under the max_stat_uncert threshold
