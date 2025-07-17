@@ -112,7 +112,7 @@ class AsymBinMerger:
 
     def _check_superbins(self): # check whether there are problems with final superbins
         print("Checking bin map for issues.")
-        
+
         # Check if superbin_indices is a list of lists
         if not all(isinstance(superbin, list) for superbin in self.superbin_indices):
             raise TypeError("superbin_indices must be a list of lists.")
@@ -180,13 +180,25 @@ class AsymBinMerger:
         return
 
     def _write_output(self): 
-        ## write bin map to self.output_file
-        #if not self.superbin_indices:
-        #    print("No superbins to write. Please run _run_bin_merging() first.")
-        #    return
-        #if not os.path.exists(self.output_dir):
-        #    os.makedirs(self.output_dir)
-        #
+        """
+        Writes bin map to self.output_file
+        Raises:
+            Exception: If no superbins are initialized or if the output directory does not exist.
+        """
+        # Check if output directory is set
+        if self.output_dir is None:
+            raise ValueError("Output directory is not set. Please provide a valid output directory.")
+        
+        # Check if superbin_indices is empty
+        if not self.superbin_indices:
+            raise Exception("No superbins to write. Please run _run_bin_merging() first.")
+        # Check if output directory exists, create it if not
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+        
+        # Write the superbin indices to the output file
+        with open(self.output_file, 'w') as f:
+            f.write(str(self.superbin_indices))
         print("Writing output to %s."%(self.output_file))
         return
     
