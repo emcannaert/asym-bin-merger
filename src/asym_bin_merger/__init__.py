@@ -77,9 +77,12 @@ class AsymBinMerger:
             raise TypeError("`hist` must be a ROOT.TH2 object or a numpy array in debug mode.")
     
     def _init_superbin_indices(self) -> list: # initialize the superbin index list
-        # Identify bins that are already under the max_stat_uncert threshold
-        # and set them as their own superbins. Superbins are initialized as a list of lists, 
-        # where each inner list contains the indices of bins that are merged together.
+        """
+        Identify bins that are already under the max_stat_uncert threshold
+        and set them as their own superbins. 
+        Superbins are initialized as a list of lists, 
+        where each inner list contains the indices of bins that are merged together.
+        """
         if self.debug:
             if isinstance(self.hist, np.ndarray):
                 # For debug mode, assume hist is a numpy array
