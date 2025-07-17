@@ -47,7 +47,22 @@ class AsymBinMerger:
 
     ## Main methods
     def _convert_hist(self) -> list:  # convert hist to 2D array for easier handling, also set final_hist
-        # TODO
+        # Convert the ROOT histogram to a 2D numpy array for easier handling
+        if self.debug:
+            if isinstance(self.hist, np.ndarray):
+                # If hist is already a numpy array, just return it
+                return self.hist
+            else:
+                raise TypeError("In debug mode, `hist` must be a numpy array.")
+        elif isinstance(self.hist, ROOT.TH2):
+            # If hist is a ROOT histogram, convert it to a numpy array
+            n_bins_x = self.hist.GetNbinsX()
+            n_bins_y = self.hist.GetNbinsY()
+            hist_array = np.zeros((n_bins_x, n_bins_y))
+            for i in range(1, n_bins_x + 1):
+                for j in range(1, n_bins_y + 1):
+                    hist_array[i - 1, j - 1] = self.hist.GetBinContent(i, j)
+            self.final_hist = hist_array
         return []
     
     def _init_superbin_indices(self) -> list: # initialize the superbin index list
