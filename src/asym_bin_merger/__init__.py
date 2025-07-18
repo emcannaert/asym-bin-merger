@@ -46,8 +46,9 @@ class AsymBinMerger:
 
         # run main workflow
         if not debug:
-            self._run()
-            self._write_output()
+            print("Running AsymBinMerger in normal mode.")
+            #self._run()
+            #self._write_output()
         else:
             print("Running in debug mode.")
 
@@ -173,14 +174,26 @@ class AsymBinMerger:
                     with superbins indices {self.superbin_indices}."
                 )
 
-            bad_neighbor_num = bad_neighbor_nums[0]
-
-            # add bad bin into 'worst' neighbor
+            
+            bad_neighbor_superbin = bad_neighbor_nums[0]  # This is a list of coordinates
+            try:
+                bad_neighbor_num = self.superbin_indices.index(bad_neighbor_superbin)
+            except ValueError:
+                # Fallback: find the superbin that contains all coordinates of bad_neighbor_superbin
+                found = False
+                for idx, superbin in enumerate(self.superbin_indices):
+                    if all(coord in superbin for coord in bad_neighbor_superbin):
+                        bad_neighbor_num = idx
+                        found = True
+                        break
+                if not found:
+                    print(f"Warning: Neighbor superbin {bad_neighbor_superbin} not found in current superbin_indices. Skipping this merge.")
+                    it_num += 1
+                    continue  # Skip this iteration
             self.superbin_indices[bad_neighbor_num].extend(self.superbin_indices[bad_bin_num])
             
             # remove bad bin from superbin indices
             self.superbin_indices.pop(bad_bin_num)
-
 
             # update bad bins list for next iteration
             bad_bin_indices, bad_bin_nums = self._get_bad_bins()
@@ -213,11 +226,14 @@ class AsymBinMerger:
 
         return
 
-    def _run(self):  # do main bin-merging scheme
+    def run(self):  # do main bin-merging scheme
         self.converted_hist = self._convert_hist()
         self.superbin_indices = self._init_superbin_indices()
         self._run_bin_merging()
         self._check_superbins()
+        self._write_output()
+        print("Bin merging completed successfully.")
+        self._merged_hist_to_image()
 
     ## Helper functions
 
@@ -299,7 +315,7 @@ class AsymBinMerger:
         if self.debug:
             # In debug mode, assume hist is a numpy array
             bad_bins = []
-            for index in bad_bin_indices:
+            for index in bad_bin_numbers:
                 total_superbin_value = 0
                 for bin_index in index:
                     bin_value = self.hist[bin_index[0], bin_index[1]]
@@ -338,7 +354,8 @@ class AsymBinMerger:
                 the max_stat_uncert threshold."
             )
         else:
-            for index in bad_bin_indices:
+            bad_bins = []
+            for index in bad_bin_numbers:
                 superbin = self.superbin_indices[index]
                 total_superbin_value = 0
                 for bin_index in superbin:
@@ -350,7 +367,9 @@ class AsymBinMerger:
                     else 0
                 )
                 # Use get_superbin_centroids method to get centroid coordinates
-                centroids_x, centroids_y = self.get_superbin_centroids()
+                centroids = self.get_superbin_centroids()
+                centroids_x = [c[0] for c in centroids]
+                centroids_y = [c[1] for c in centroids]
                 centroid_x = centroids_x[index]
                 centroid_y = centroids_y[index]
                 center_x = (self.hist.GetNbinsX() + 1) // 2  # ROOT bins are 1-based
@@ -402,7 +421,7 @@ class AsymBinMerger:
         bad_superbin = self.superbin_indices[bad_bin_num]
 
 
-        neighbors = set()
+        neighbors = []
         neighbor_counts = []
 
         for superbin in superbins:
@@ -531,10 +550,18 @@ class AsymBinMerger:
             for bin_index in superbin:
                 if self.debug:
                     # In debug mode, assume hist is a numpy array
-                    merged_hist[bin_index[0], bin_index[1]] += self.hist[bin_index[0], bin_index[1]]
+                    if 0 <= bin_index[0] < merged_hist.shape[0] and 0 <= bin_index[1] < merged_hist.shape[1]:
+                        merged_hist[bin_index[0], bin_index[1]] += self.hist[bin_index[0], bin_index[1]]
+                    else:
+                    # Skip invalid bin
+                        continue
                 else:
                     # For ROOT histograms, use GetBinContent
-                    merged_hist[bin_index[0], bin_index[1]] += self.hist.GetBinContent(bin_index[0], bin_index[1])
+                    if 1 <= bin_index[0] <= self.hist.GetNbinsX() and 1 <= bin_index[1] <= self.hist.GetNbinsY():
+                        merged_hist[bin_index[0]-1, bin_index[1]-1] += self.hist.GetBinContent(bin_index[0], bin_index[1])
+                    else:
+                        # Skip invalid bin
+                        continue
         return merged_hist
     
     def _merged_hist_to_image(self): # testing: plot merged histogram as an image
@@ -545,25 +572,87 @@ class AsymBinMerger:
         if not self.superbin_indices:
             print("No superbins initialized. Please run _init_superbin_indices() first.")
             return
-        merged_hist = self._get_merged_hist()
+        
+        if self.debug:
+            shape = self.hist.shape
+        else:
+            shape = (self.hist.GetNbinsX(), self.hist.GetNbinsY())
+        label_map = np.full(shape, -1, dtype=int)  # -1 for unassigned bins
         #plot the merged histogram
-        if merged_hist.size == 0:
+        for superbin_idx, superbin in enumerate(self.superbin_indices):
+            for bin_index in superbin:
+                if self.debug:
+                    x, y = bin_index
+                    if 0 <= x < shape[0] and 0 <= y < shape[1]:
+                        label_map[x, y] = superbin_idx
+                else:
+                    x, y = bin_index
+                    if 1 <= x <= shape[0] and 1 <= y <= shape[1]:
+                        label_map[x-1, y-1] = superbin_idx
+        if label_map.size == 0:
             print("Merged histogram is empty. Cannot plot.")
             return
+        
+        all_bins = set((x, y) for x in range(shape[0]) for y in range(shape[1]))
+        assigned_bins = set()
+        for superbin in self.superbin_indices:
+            for bin_index in superbin:
+                if self.debug:
+                    assigned_bins.add(bin_index)
+                else:
+                    assigned_bins.add((bin_index[0]-1, bin_index[1]-1))
+        missing_bins = all_bins - assigned_bins
+        if missing_bins:
+            print(f"Warning: {len(missing_bins)} bins are not assigned to any superbin: {missing_bins}")
+
+        from matplotlib.colors import ListedColormap
+        import matplotlib.patches as patches
+
+        n_superbins = len(self.superbin_indices)
+        base_cmap = plt.get_cmap('tab20')
+        colors = base_cmap.colors if n_superbins <= 20 else plt.cm.get_cmap('tab20b', n_superbins).colors
+        cmap = ListedColormap(colors[:n_superbins])
+
         plt.figure(figsize=(10, 8))
-        plt.imshow(merged_hist, cmap=cm.viridis, interpolation='nearest')
-        plt.colorbar(label='Merged Bin Values')
+        plt.imshow(label_map, cmap=cmap, interpolation='nearest', origin='lower',)
         plt.title('Merged Histogram with Superbins')
         plt.xlabel('X-axis')
         plt.ylabel('Y-axis')
-        plt.xticks(ticks=np.arange(merged_hist.shape[1]), labels=np.arange(merged_hist.shape[1]))
-        plt.yticks(ticks=np.arange(merged_hist.shape[0]), labels=np.arange(merged_hist.shape[0]))
+        plt.xticks(ticks=np.arange(shape[1]), labels=np.arange(shape[1]))
+        plt.yticks(ticks=np.arange(shape[0]), labels=np.arange(shape[0]))
         plt.grid(False)
+
+        ax = plt.gca()
+        for superbin_idx, superbin in enumerate(self.superbin_indices):
+            # Get all bin coordinates for this superbin
+            coords = [(b[0], b[1]) if self.debug else (b[0]-1, b[1]-1) for b in superbin]
+            xs = [c[1] for c in coords]
+            ys = [c[0] for c in coords]
+            # Draw a rectangle around the bounding box of the superbin
+            #min_x, max_x = min(xs), max(xs)
+            #min_y, max_y = min(ys), max(ys)
+            #rect = patches.Rectangle((min_x-0.5, min_y-0.5), max_x-min_x+1, max_y-min_y+1,
+            #                        linewidth=2, edgecolor='black', facecolor='none')
+            #ax.add_patch(rect)
+            # Annotate centroid with stat uncertainty
+            centroid_x = int(np.mean(xs))
+            centroid_y = int(np.mean(ys))
+            if self.debug:
+                total_value = sum(self.hist[y, x] for y, x in coords)
+            else:
+                total_value = sum(self.hist.GetBinContent(y+1, x+1) for y, x in coords)
+            stat_uncert = (np.sqrt(total_value) / total_value) if total_value > 0 else 0
+            plt.text(centroid_x, centroid_y, f"{stat_uncert:.2f}", color='black',
+                    ha='center', va='center', fontsize=10, fontweight='bold')
+
+
+        plt.savefig(os.path.join(self.output_dir, 'merged_histogram.png'))
         plt.show()
+        plt.close()
         print("Merged histogram plotted successfully.")
         # Save the plot
-        plt.savefig(os.path.join(self.output_dir, 'merged_histogram.png'))
         print("Merged histogram saved as 'merged_histogram.png' in the output directory.")
         return       
-        
+
+
     

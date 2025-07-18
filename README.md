@@ -61,11 +61,9 @@ hist = r_file.Get("my_histogram")  # Ensure it's a TH2F
 bin_merger = AsymBinMerger(hist, 0.25, "merged_hist")
 
 # Retrieve outputs
-merged_hist = bin_merger.get_merged_hist()
+merged_hist = bin_merger.run()
 superbin_indices = bin_merger.get_bin_map()
 
-# Plot diagnostics
-bin_merger.plot_merged_hist()
 ```
 
 ---
@@ -84,13 +82,7 @@ Stored in the `output_dir` (e.g. `"merged_hist"`):
   ]
   ```
 
-- `merged_hist.root`: ROOT file containing the merged histogram
-
-- Diagnostic plots:
-  - `pre_merge_hist.png`: Original histogram
-  - `post_merge_hist.png`: Post-merged histogram
-  - `bin_map.png`: Visual representation of bin groupings
-  - `stat_uncert_post_merge.png`: Post-merge uncertainty map
+- `merged_hist.png`: An image containing the merged histogram with statistical uncertainty labeled for each superbin
 
 ---
 
