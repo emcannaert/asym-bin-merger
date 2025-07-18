@@ -70,5 +70,5 @@ test_cases_with_bottom_left_origin = {
 def test_bin_merging(name, case):
     merger = AsymBinMerger(hist=case["bin_contents"], max_stat_uncert=0.25, output_dir="bin_maps/", debug = True)
     merger._run()
-    assert np.array_equal(merger._get_merged_hist(), case["merged_contents"]) == True
-    np.testing.assert_array_equal(merger._get_merged_hist(), case["merged_contents"])
+    assert np.array_equal(merger._get_merged_hist(), case["superbin_labels"]) == True
+    np.testing.assert_array_equal(merger._get_merged_hist(), case["superbin_labels"])
