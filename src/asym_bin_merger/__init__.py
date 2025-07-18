@@ -329,8 +329,63 @@ class AsymBinMerger:
             return [], [] 
         return bad_bin_indices, bad_bin_numbers  # return list of bad bins, each represented as a list of indices
 
-    def _get_neighbor_bins(self, bad_index) -> list: # return list (by decreasing stat uncert) of neighbor superbin indices
-        return []
+    
+    def _get_neighbor_bins(self, bad_bin_num) -> list: 
+        """
+        Given an index into self.superbin_indices representing a "bad bin",
+        return a list of neighboring superbins sorted by descending statistical uncertainty,
+        and secondarily by number of neighbors (also descending).
+        """
+        if not self.superbin_indices:
+            print("No superbins.")
+            return []
+        
+        superbins = self.superbin_indices
+        bad_superbin = self.superbin_indices[bad_bin_num]
+        
+        neighbors = set()
+        neighbor_counts=[]
+
+        for superbin in superbins:
+            count = 0 
+            if bad_superbin[0] in superbin: continue #don't want to double count
+            
+            #loop over coordinates of each bin within superbin
+            for coord in superbin:
+                if (abs(coord[0]-bad_superbin[0]<=1 and abs(coord[1]-bad_superbin[1]<=1))):
+                    neighbors.append(superbin)
+                    count +=1
+            if count > 0:
+                neighbor_counts.append(count)      
+        
+        # helper function for uncertainty to sort
+        def stat_uncertainty(superbin):
+            values = []
+            for (x, y) in superbin:
+                if self.debug:
+                    values.append(self.hist[x, y])
+                else: 
+                    values.append(self.hist.GetBinContent(x, y))
+            total = sum(values)
+            return np.sqrt(total)/total if total > 0 else 0
+
+        # Pair each superbin with its sorting criteria: (uncertainty, number of neighbors)
+        criteria_with_bins = list(zip(
+            [stat_uncertainty(sb) for sb in neighbors],
+            [len(sb) for sb in neighbors],
+            neighbors
+        ))
+
+        # Sort based on uncertainty (descending), then number of neighbors (descending)
+        criteria_with_bins.sort(key=lambda x: (-x[0], -x[1]))
+
+        # Unpack the sorted bins
+        neighbors = [x[2] for x in criteria_with_bins]
+
+        if self.debug:
+            print(f"Found {len(neighbors)} neighboring superbins.")
+
+        return neighbors
 
     def print_bin_map(self): # helper for testing and checking merging process
         # TODO
