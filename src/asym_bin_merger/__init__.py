@@ -458,9 +458,14 @@ class AsymBinMerger:
 
     ## Getters and setters
 
-    def get_bin_map(self) -> list:  # external getter for superbin indices list
-        # TODO
-        return []
+    def get_bin_map(self) -> list: # external getter for superbin indices list 
+        # Looks at the output file and returns the bin map as a list.
+        if os.path.exists(self.output_file):
+            with open(self.output_file, 'r') as f:
+                bin_map = eval(f.read())
+            return bin_map
+        else:
+            raise FileNotFoundError(f"Output file {self.output_file} does not exist. Please run _write_output() first.")
 
     def get_superbin_centroids(self) -> list:  # return list of superbin centroids
         centroids = []
