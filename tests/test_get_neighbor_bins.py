@@ -1,3 +1,4 @@
+from unittest import case
 import numpy as np
 import pytest
 
@@ -22,32 +23,21 @@ neighbor_bin_cases = {
     "TC2_isolated_bad_bin": {
         "bin_contents": np.array([[10, 10, 10], [10, 1, 10], [10, 10, 10]]),
         "expected_neighbors_for_bin_4": [
-            # Bin (1,1) is surrounded by high-content bins,
-            # but each is in a separate superbin
-            [(0, 1)],
-            [(1, 0)],
-            [(1, 2)],
-            [(2, 1)],
-            [(0, 0)],
-            [(0, 2)],
-            [(2, 0)],
-            [(2, 2)],
-        ],
+            # Bin (1,1) is surrounded by high-content bins, but each is in a separate superbin
+            [(0,0)], [(0,1)], [(0,2)], [(1,0)],
+            [(1,2)], [(2,0)], [(2,1)], [(2,2)]
+        ]
+
     },
     "TC3_only_edge_neighbors": {
         "bin_contents": np.array([[1, 1, 1], [1, 10, 1], [1, 1, 1]]),
         "expected_neighbors_for_bin_4": [
             # Neighbors should be bins adjacent to (1,1), all with low counts
-            [(0, 1)],
-            [(1, 0)],
-            [(1, 2)],
-            [(2, 1)],
-            [(0, 0)],
-            [(0, 2)],
-            [(2, 0)],
-            [(2, 2)],
-        ],
-    },
+            [(0,0)], [(0,1)], [(0,2)], [(1,0)],
+            [(1,2)], [(2,0)], [(2,1)], [(2,2)]
+        ]
+    }
+
 }
 
 edge_cases = {
@@ -87,16 +77,9 @@ def test_get_neighbor_bins(name, case):
         pytest.fail(f"Center bin {center_coord} not found in bad bins for {name}")
 
     neighbors = merger._get_neighbor_bins(bad_bin_index)
-
-    # Flatten neighbor coords for easier comparison
-    flat_neighbors = [sorted(list(sb)) for sb in neighbors]
-    expected_neighbors = [
-        sorted([coord]) for coord in case["expected_neighbors_for_bin_4"]
-    ]
-
-    assert (
-        flat_neighbors == expected_neighbors
-    ), f"Failed {name}: Expected {expected_neighbors}, got {flat_neighbors}"
+    
+    assert neighbors == case["expected_neighbors_for_bin_4"], \
+    f"Failed {name}: Expected {case['expected_neighbors_for_bin_4']}, got {neighbors}"
 
 
 @pytest.mark.parametrize("name, case", edge_cases.items())
@@ -118,9 +101,6 @@ def test_edge_and_corner_neighbors(name, case):
         index = len(merger.superbin_indices) - 1
 
     neighbors = merger._get_neighbor_bins(index)
-    flat_neighbors = [sorted(list(sb)) for sb in neighbors]
-    expected_neighbors = [sorted([coord]) for coord in case["expected_neighbors"]]
-
-    assert (
-        flat_neighbors == expected_neighbors
-    ), f"Failed {name}: Expected {expected_neighbors}, got {flat_neighbors}"
+    
+    assert neighbors == case["expected_neighbors"], \
+    f"Failed {name}: Expected {case['expected_neighbors']}, got {neighbors}"

@@ -128,8 +128,9 @@ class AsymBinMerger:
             bad_bin_num = bad_bin_nums[0]
             bad_bin = bad_bin_indices[0]
 
-            # get list of neighbors
-            bad_neighbor_nums = self._get_neighbor_bins(bad_bin)
+            # get list of neighbors 
+            bad_neighbor_nums = self._get_neighbor_bins(bad_bin_num)
+
             if not bad_neighbor_nums:
                 raise ValueError(
                     f"(Iteration {it_num}) No neighbor superbins \
@@ -140,12 +141,11 @@ class AsymBinMerger:
             bad_neighbor_num = bad_neighbor_nums[0]
 
             # add bad bin into 'worst' neighbor
-            self.superbin_indices[bad_neighbor_num].extend(
-                self.superbin_indices[bad_bin_num]
-            )
+            self.superbin_indices[bad_neighbor_num].extend(self.superbin_indices[bad_bin_num])
+            
+            # remove bad bin from superbin indices
+            self.superbin_indices.pop(bad_bin_num)
 
-            # remove bad bin from superbin_indices
-            self.superbin_indices.pop(bad_neighbor_num)
 
             # update bad bins list for next iteration
             bad_bin_indices, bad_bin_nums = self._get_bad_bins()
@@ -316,6 +316,7 @@ class AsymBinMerger:
         superbins = self.superbin_indices
         bad_superbin = self.superbin_indices[bad_bin_num]
 
+
         neighbors = set()
         neighbor_counts = []
 
@@ -326,12 +327,12 @@ class AsymBinMerger:
 
             # loop over coordinates of each bin within superbin
             for coord in superbin:
-                if abs(
-                    coord[0] - bad_superbin[0] <= 1
-                    and abs(coord[1] - bad_superbin[1] <= 1)
-                ):
-                    neighbors.append(superbin)
-                    count += 1
+                for bad_coord in bad_superbin:
+                    if (abs(coord[0]-bad_coord[0])<=1 and abs(coord[1]-bad_coord[1])<=1):
+                        if [coord] not in neighbors:
+                            neighbors.append([coord])
+                            count +=1
+
             if count > 0:
                 neighbor_counts.append(count)
 
