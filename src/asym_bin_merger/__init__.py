@@ -25,6 +25,8 @@ import os
 
 import numpy as np
 import ROOT
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 
 class AsymBinMerger:
@@ -534,3 +536,34 @@ class AsymBinMerger:
                     # For ROOT histograms, use GetBinContent
                     merged_hist[bin_index[0], bin_index[1]] += self.hist.GetBinContent(bin_index[0], bin_index[1])
         return merged_hist
+    
+    def _merged_hist_to_image(self): # testing: plot merged histogram as an image
+        """
+        Take the identified superbins, plot a 2D histogram plot
+        with each superbin represented as a single bin and unique color
+        """
+        if not self.superbin_indices:
+            print("No superbins initialized. Please run _init_superbin_indices() first.")
+            return
+        merged_hist = self._get_merged_hist()
+        #plot the merged histogram
+        if merged_hist.size == 0:
+            print("Merged histogram is empty. Cannot plot.")
+            return
+        plt.figure(figsize=(10, 8))
+        plt.imshow(merged_hist, cmap=cm.viridis, interpolation='nearest')
+        plt.colorbar(label='Merged Bin Values')
+        plt.title('Merged Histogram with Superbins')
+        plt.xlabel('X-axis')
+        plt.ylabel('Y-axis')
+        plt.xticks(ticks=np.arange(merged_hist.shape[1]), labels=np.arange(merged_hist.shape[1]))
+        plt.yticks(ticks=np.arange(merged_hist.shape[0]), labels=np.arange(merged_hist.shape[0]))
+        plt.grid(False)
+        plt.show()
+        print("Merged histogram plotted successfully.")
+        # Save the plot
+        plt.savefig(os.path.join(self.output_dir, 'merged_histogram.png'))
+        print("Merged histogram saved as 'merged_histogram.png' in the output directory.")
+        return       
+        
+    
