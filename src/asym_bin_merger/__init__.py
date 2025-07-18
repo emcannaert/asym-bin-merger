@@ -315,9 +315,11 @@ class AsymBinMerger:
         if self.debug:
             # In debug mode, assume hist is a numpy array
             bad_bins = []
+            total_superbin_value = 0
             for index in bad_bin_numbers:
+                superbin = self.superbin_indices[index]
                 total_superbin_value = 0
-                for bin_index in index:
+                for bin_index in superbin:
                     bin_value = self.hist[bin_index[0], bin_index[1]]
                     total_superbin_value += bin_value
                 total_stat_uncert = (
@@ -325,8 +327,8 @@ class AsymBinMerger:
                     if total_superbin_value > 0
                     else 0
                 )
-                centroid_x = np.mean([bin_index[0] for bin_index in index])
-                centroid_y = np.mean([bin_index[1] for bin_index in index])
+                centroid_x = np.mean([bin_index[0] for bin_index in self.superbin_indices[index]])
+                centroid_y = np.mean([bin_index[1] for bin_index in self.superbin_indices[index]])
                 # Distance from center of histogram (x,y) value:
                 center_x = self.hist.shape[0] // 2
                 center_y = self.hist.shape[1] // 2
@@ -336,7 +338,7 @@ class AsymBinMerger:
                 )
                 # Append to bad_bins list
                 bad_bins.append(
-                    (total_stat_uncert, central_distance, centroid_x, centroid_y, index)
+                    (total_stat_uncert, central_distance, centroid_x, centroid_y, superbin)
                 )
             # Sort by total_stat_uncert (descending)
             # then central distance (closest to center of histogram),
@@ -526,12 +528,13 @@ class AsymBinMerger:
     ## testing and meta functions
     def _validate_inputs(self):
         if self.debug:
-            if not isinstance(self.hist, list) and not isinstance(
-                self.hist, np.ndarray
+            if not isinstance(self.hist, np.ndarray):
+                raise TypeError("In debug mode, `hist` must be a numpy array.")
+            if not (
+                (self.hist.ndim == 2) or
+                (self.hist.ndim == 1 and self.hist.dtype == object and all(isinstance(row, np.ndarray) for row in self.hist))
             ):
-                raise TypeError(
-                    "In debug mode `hist` must be a np.array or list object."
-                )
+                raise TypeError("In debug mode, `hist` must be a numpy array.")
         else:
             if not isinstance(self.hist, ROOT.TH2):
                 raise TypeError("`hist` must be a ROOT.TH2 object.")
@@ -542,6 +545,24 @@ class AsymBinMerger:
 
     def _get_merged_hist(self):  # testing: return np.array version of post-merge hist
         # from self.superbin_indices, get a new histogram in np.array format
+        if not isinstance(self.hist, (np.ndarray, ROOT.TH2)):
+            raise TypeError("`hist` must be a numpy array in debug mode or a ROOT.TH2 object.")
+        if self.debug:
+            if self.hist.ndim == 2:
+                pass  # regular 2D array
+            elif self.hist.ndim == 1 and self.hist.dtype == object and all(isinstance(row, np.ndarray) for row in self.hist):
+                pass  # jagged array
+            else:
+                raise ValueError("In debug mode, hist must be a 2D numpy array or a jagged array (dtype=object, 1D array of arrays).")
+                raise ValueError("In debug mode, `hist` cannot be an empty array.")
+        else:
+            if not isinstance(self.hist, ROOT.TH2):
+                raise TypeError("`hist` must be a ROOT.TH2 object.")
+            if self.hist.GetNbinsX() <= 0 or self.hist.GetNbinsY() <= 0:
+                raise ValueError("`hist` must have positive number of bins in both dimensions.")
+            if self.hist.GetEntries() == 0:
+                raise ValueError("`hist` cannot be an empty ROOT histogram.")
+            
         if not self.superbin_indices:
             print("No superbins initialized. Please run _init_superbin_indices() first.")
             return []
@@ -550,8 +571,19 @@ class AsymBinMerger:
             for bin_index in superbin:
                 if self.debug:
                     # In debug mode, assume hist is a numpy array
-                    if 0 <= bin_index[0] < merged_hist.shape[0] and 0 <= bin_index[1] < merged_hist.shape[1]:
-                        merged_hist[bin_index[0], bin_index[1]] += self.hist[bin_index[0], bin_index[1]]
+                    if self.hist.ndim == 2:
+                # Regular 2D array
+                        if 0 <= bin_index[0] < merged_hist.shape[0] and 0 <= bin_index[1] < merged_hist.shape[1]:
+                            merged_hist[bin_index[0], bin_index[1]] += self.hist[bin_index[0], bin_index[1]]
+                    elif self.hist.ndim == 1 and self.hist.dtype == object:
+                        # Jagged array: merged_hist and self.hist are 1D arrays of arrays
+                        row, col = bin_index
+                        if (
+                            0 <= row < len(merged_hist)
+                            and isinstance(merged_hist[row], np.ndarray)
+                            and 0 <= col < len(merged_hist[row])
+                        ):
+                            merged_hist[row][col] += self.hist[row][col]
                     else:
                     # Skip invalid bin
                         continue

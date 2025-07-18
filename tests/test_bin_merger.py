@@ -37,5 +37,5 @@ def test_bin_merging(name, case):
         output_dir="bin_maps/",
         debug=True,
     )
-    merger._run()
+    merger.run()
     np.testing.assert_array_equal(merger._get_merged_hist(), case["superbin_labels"])
