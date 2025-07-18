@@ -15,7 +15,9 @@ Inputs:
 Outputs:
     Bin mappings are stored as bin_maps/<some name>_bin_map.txt by default, and
     can also be obtained inline using the .get_bin_map() method.
-
+Usage:
+- Create an instance of AsymBinMerger.
+- Call `.print_help()` for usage instructions.
 
 """
 
@@ -77,6 +79,7 @@ class AsymBinMerger:
             self.final_hist = hist_array
             return self.final_hist
         else:
+
             raise TypeError(
                 "`hist` must be a ROOT.TH2 object or a numpy array in debug mode."
             )
@@ -112,9 +115,39 @@ class AsymBinMerger:
         self.superbin_indices = superbins
         return superbins
 
-    def _check_superbins(self):  # check whether there are problems with final superbins
-        # TODO
+    def _check_superbins(self): # check whether there are problems with final superbins
         print("Checking bin map for issues.")
+
+        # Check if superbin_indices is a list of lists
+        if not all(isinstance(superbin, list) for superbin in self.superbin_indices):
+            raise TypeError("superbin_indices must be a list of lists.")
+        
+        # Check if there are any empty superbins    
+        # This is a simple check, but it can be extended to more complex checks if needed
+        empty_superbins = [superbin for superbin in self.superbin_indices if not superbin]
+        if empty_superbins:
+            print(f"Warning: Found {len(empty_superbins)} empty superbins. These will be ignored in the merging process.")
+            # Optionally, remove empty superbins from the list
+            self.superbin_indices = [superbin for superbin in self.superbin_indices if superbin]
+        
+        # check if there are any issues with the superbin indices
+        if not self.superbin_indices:
+            raise Exception("No superbins initialized. Please run _init_superbin_indices() first.")
+        
+        # Check if all bins in superbin_indices are valid
+        for superbin in self.superbin_indices:
+            for bin_index in superbin:
+                if self.debug:
+                    # In debug mode, assume hist is a numpy array
+                    if not (0 <= bin_index[0] < self.hist.shape[0] and 0 <= bin_index[1] < self.hist.shape[1]):
+                        raise Exception(f"Invalid bin index {bin_index} in superbin {superbin}.")
+                else:
+                    # For ROOT histograms, check if the bin index is valid
+                    if not (1 <= bin_index[0] <= self.hist.GetNbinsX() and 1 <= bin_index[1] <= self.hist.GetNbinsY()):
+                        raise Exception(f"Invalid bin index {bin_index} in superbin {superbin}.")
+                    
+        print("Superbins check completed successfully. No issues found.")
+        # If all checks pass, return successfully
         return
 
     def _run_bin_merging(self):  # run main bin merging scheme
@@ -154,9 +187,28 @@ class AsymBinMerger:
 
         return
 
-    def _write_output(self):  # write bin map to self.output_file
-        # TODO
-        print(f"Writing output to {self.output_file}.")
+    def _write_output(self): 
+        """
+        Writes bin map to self.output_file
+        Raises:
+            Exception: If no superbins are initialized or if the output directory does not exist.
+        """
+        # Check if output directory is set
+        if self.output_dir is None:
+            raise ValueError("Output directory is not set. Please provide a valid output directory.")
+        
+        # Check if superbin_indices is empty
+        if not self.superbin_indices:
+            raise Exception("No superbins to write. Please run _run_bin_merging() first.")
+        # Check if output directory exists, create it if not
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+        
+        # Write the superbin indices to the output file
+        with open(self.output_file, 'w') as f:
+            f.write(str(self.superbin_indices))
+        print("Writing output to %s."%(self.output_file))
+
         return
 
     def _run(self):  # do main bin-merging scheme
@@ -167,10 +219,41 @@ class AsymBinMerger:
 
     ## Helper functions
 
-    def _print_help(self):  # give information about usage
-        # TODO
-        print("Hello world.")
-        return
+    def _print_help(self): # give information about usage
+        """
+        Print usage instructions for the AsymBinMerger utility.
+        """
+        print("=" * 60)
+        print("AsymBinMerger: Optimize binning for a 2D ROOT histogram")
+        print("=" * 60)
+        print("Description:")
+        print("  Merges bins in a 2D histogram such that the statistical uncertainty")
+        print("  in each merged bin (superbin) remains below a given threshold.")
+        print()
+        print("Inputs:")
+        print("  hist             : Required. A ROOT.TH2 histogram object")
+        print("                     (or a 2D NumPy array in debug mode).")
+        print("  max_stat_uncert  : Required. A float indicating the maximum allowed")
+        print("                     relative statistical uncertainty per bin.")
+        print("  output_dir       : Optional. Directory where output bin map is saved.")
+        print("                     Defaults to current working directory if not provided.")
+        print("  debug            : Optional. If True, skips main execution for testing (default: False).")
+        print()
+        print("Output:")
+        print("  - A text file 'bin_map.txt' is written to output_dir.")
+        print("  - It contains the final binning map in the form:")
+        print("      [ [ (x1, y1), (x2, y2), ... ], [ ... ], ... ]")
+        print("    where each sublist represents a merged 'superbin'.")
+        print()
+        print("Usage Example:")
+        print("  merger = AsymBinMerger(hist=my_hist, max_stat_uncert=0.1,")
+        print("                         output_dir='bin_maps', debug=False)")
+        print("  bin_map = merger.get_bin_map()")
+        print()
+        print("Note:")
+        print("  - Requires ROOT to be available in the runtime environment.")
+        print("  - Use debug=True to test with NumPy arrays directly.")
+        print("=" * 60)
 
     def _get_bad_bins(self) -> list:
         # return bad bin indices (those above the max_stat_uncert),
