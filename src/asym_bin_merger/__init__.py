@@ -15,7 +15,9 @@ Inputs:
 Outputs:
     Bin mappings are stored as bin_maps/<some name>_bin_map.txt by default, and 
     can also be obtained inline using the .get_bin_map() method.
-
+Usage:
+- Create an instance of AsymBinMerger.
+- Call `.print_help()` for usage instructions.
 
 """
 import ROOT  ## should be in documentation that this can only be run in a ROOT environment 
@@ -212,9 +214,40 @@ class AsymBinMerger:
     ## Helper functions
 
     def _print_help(self): # give information about usage
-        # TODO
-        print("Hello world.")
-        return
+        """
+        Print usage instructions for the AsymBinMerger utility.
+        """
+        print("=" * 60)
+        print("AsymBinMerger: Optimize binning for a 2D ROOT histogram")
+        print("=" * 60)
+        print("Description:")
+        print("  Merges bins in a 2D histogram such that the statistical uncertainty")
+        print("  in each merged bin (superbin) remains below a given threshold.")
+        print()
+        print("Inputs:")
+        print("  hist             : Required. A ROOT.TH2 histogram object")
+        print("                     (or a 2D NumPy array in debug mode).")
+        print("  max_stat_uncert  : Required. A float indicating the maximum allowed")
+        print("                     relative statistical uncertainty per bin.")
+        print("  output_dir       : Optional. Directory where output bin map is saved.")
+        print("                     Defaults to current working directory if not provided.")
+        print("  debug            : Optional. If True, skips main execution for testing (default: False).")
+        print()
+        print("Output:")
+        print("  - A text file 'bin_map.txt' is written to output_dir.")
+        print("  - It contains the final binning map in the form:")
+        print("      [ [ (x1, y1), (x2, y2), ... ], [ ... ], ... ]")
+        print("    where each sublist represents a merged 'superbin'.")
+        print()
+        print("Usage Example:")
+        print("  merger = AsymBinMerger(hist=my_hist, max_stat_uncert=0.1,")
+        print("                         output_dir='bin_maps', debug=False)")
+        print("  bin_map = merger.get_bin_map()")
+        print()
+        print("Note:")
+        print("  - Requires ROOT to be available in the runtime environment.")
+        print("  - Use debug=True to test with NumPy arrays directly.")
+        print("=" * 60)
     
     def _get_bad_bins(self) -> list:
     # return list of bad bin indices (those that are above the max_stat_uncert threshold), 
