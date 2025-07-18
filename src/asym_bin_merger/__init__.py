@@ -452,8 +452,21 @@ class AsymBinMerger:
         return neighbors
 
     def print_bin_map(self):  # helper for testing and checking merging process
-        # TODO
         print("Printing out formatted bin map")
+        if not self.superbin_indices:
+            print("No superbins to print. Please run _init_superbin_indices() first.")
+            return
+        for i, superbin in enumerate(self.superbin_indices):
+            print(f"Superbin {i}:")
+            for bin_index in superbin:
+                if self.debug:
+                    # In debug mode, assume hist is a numpy array
+                    print(f"  Bin index: {bin_index} (value: {self.hist[bin_index[0], bin_index[1]]})")
+                else:
+                    # For ROOT histograms, use GetBinContent
+                    value = self.hist.GetBinContent(bin_index[0], bin_index[1])
+                    print(f"  Bin index: {bin_index} (value: {value})")
+        print("End of bin map.") 
         return
 
     ## Getters and setters
