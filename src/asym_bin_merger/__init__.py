@@ -25,6 +25,8 @@ import os
 
 import numpy as np
 import ROOT
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 
 class AsymBinMerger:
@@ -452,15 +454,33 @@ class AsymBinMerger:
         return neighbors
 
     def print_bin_map(self):  # helper for testing and checking merging process
-        # TODO
         print("Printing out formatted bin map")
+        if not self.superbin_indices:
+            print("No superbins to print. Please run _init_superbin_indices() first.")
+            return
+        for i, superbin in enumerate(self.superbin_indices):
+            print(f"Superbin {i}:")
+            for bin_index in superbin:
+                if self.debug:
+                    # In debug mode, assume hist is a numpy array
+                    print(f"  Bin index: {bin_index} (value: {self.hist[bin_index[0], bin_index[1]]})")
+                else:
+                    # For ROOT histograms, use GetBinContent
+                    value = self.hist.GetBinContent(bin_index[0], bin_index[1])
+                    print(f"  Bin index: {bin_index} (value: {value})")
+        print("End of bin map.") 
         return
 
     ## Getters and setters
 
-    def get_bin_map(self) -> list:  # external getter for superbin indices list
-        # TODO
-        return []
+    def get_bin_map(self) -> list: # external getter for superbin indices list 
+        # Looks at the output file and returns the bin map as a list.
+        if os.path.exists(self.output_file):
+            with open(self.output_file, 'r') as f:
+                bin_map = eval(f.read())
+            return bin_map
+        else:
+            raise FileNotFoundError(f"Output file {self.output_file} does not exist. Please run _write_output() first.")
 
     def get_superbin_centroids(self) -> list:  # return list of superbin centroids
         centroids = []
@@ -502,6 +522,48 @@ class AsymBinMerger:
             raise TypeError("`output_dir` must be a string.")
 
     def _get_merged_hist(self):  # testing: return np.array version of post-merge hist
-        # TODO
-        print("Returning post-merged hist as numpy array.")
-        return []
+        # from self.superbin_indices, get a new histogram in np.array format
+        if not self.superbin_indices:
+            print("No superbins initialized. Please run _init_superbin_indices() first.")
+            return []
+        merged_hist = np.zeros_like(self.final_hist)
+        for superbin in self.superbin_indices:
+            for bin_index in superbin:
+                if self.debug:
+                    # In debug mode, assume hist is a numpy array
+                    merged_hist[bin_index[0], bin_index[1]] += self.hist[bin_index[0], bin_index[1]]
+                else:
+                    # For ROOT histograms, use GetBinContent
+                    merged_hist[bin_index[0], bin_index[1]] += self.hist.GetBinContent(bin_index[0], bin_index[1])
+        return merged_hist
+    
+    def _merged_hist_to_image(self): # testing: plot merged histogram as an image
+        """
+        Take the identified superbins, plot a 2D histogram plot
+        with each superbin represented as a single bin and unique color
+        """
+        if not self.superbin_indices:
+            print("No superbins initialized. Please run _init_superbin_indices() first.")
+            return
+        merged_hist = self._get_merged_hist()
+        #plot the merged histogram
+        if merged_hist.size == 0:
+            print("Merged histogram is empty. Cannot plot.")
+            return
+        plt.figure(figsize=(10, 8))
+        plt.imshow(merged_hist, cmap=cm.viridis, interpolation='nearest')
+        plt.colorbar(label='Merged Bin Values')
+        plt.title('Merged Histogram with Superbins')
+        plt.xlabel('X-axis')
+        plt.ylabel('Y-axis')
+        plt.xticks(ticks=np.arange(merged_hist.shape[1]), labels=np.arange(merged_hist.shape[1]))
+        plt.yticks(ticks=np.arange(merged_hist.shape[0]), labels=np.arange(merged_hist.shape[0]))
+        plt.grid(False)
+        plt.show()
+        print("Merged histogram plotted successfully.")
+        # Save the plot
+        plt.savefig(os.path.join(self.output_dir, 'merged_histogram.png'))
+        print("Merged histogram saved as 'merged_histogram.png' in the output directory.")
+        return       
+        
+    
