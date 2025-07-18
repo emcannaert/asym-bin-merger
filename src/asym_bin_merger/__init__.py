@@ -520,6 +520,17 @@ class AsymBinMerger:
             raise TypeError("`output_dir` must be a string.")
 
     def _get_merged_hist(self):  # testing: return np.array version of post-merge hist
-        # TODO
-        print("Returning post-merged hist as numpy array.")
-        return []
+        # from self.superbin_indices, get a new histogram in np.array format
+        if not self.superbin_indices:
+            print("No superbins initialized. Please run _init_superbin_indices() first.")
+            return []
+        merged_hist = np.zeros_like(self.final_hist)
+        for superbin in self.superbin_indices:
+            for bin_index in superbin:
+                if self.debug:
+                    # In debug mode, assume hist is a numpy array
+                    merged_hist[bin_index[0], bin_index[1]] += self.hist[bin_index[0], bin_index[1]]
+                else:
+                    # For ROOT histograms, use GetBinContent
+                    merged_hist[bin_index[0], bin_index[1]] += self.hist.GetBinContent(bin_index[0], bin_index[1])
+        return merged_hist
