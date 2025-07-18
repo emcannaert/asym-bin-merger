@@ -154,7 +154,7 @@ def test_stress_neighbors_known(name, case):
         hist=case["bin_contents"],
         max_stat_uncert=0.25,
         output_dir="bin_maps/",
-        debug=False,
+        debug=True,
     )
     merger._init_superbin_indices()
 
