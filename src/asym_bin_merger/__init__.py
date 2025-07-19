@@ -39,7 +39,15 @@ class AsymBinMerger:
         self.debug = debug
         self.file_name = "bin_map.txt"
         self.output_file = os.path.join(self.output_dir, self.file_name)
-        self.final_hist = np.zeros((5, 5))  # placeholder for final hist
+        if self.debug and isinstance(self.hist, np.ndarray):
+            if self.hist.ndim == 2:
+                self.final_hist = np.zeros_like(self.hist)
+            elif self.hist.ndim == 1 and self.hist.dtype == object:
+                self.final_hist = np.array([np.zeros_like(row) for row in self.hist], dtype=object)
+            else:
+                self.final_hist = None
+        else:
+            self.final_hist = None
         self.superbin_indices = []
         # check inputs
         self._validate_inputs()
@@ -434,7 +442,7 @@ class AsymBinMerger:
             # loop over coordinates of each bin within superbin
             for coord in superbin:
                 for bad_coord in bad_superbin:
-                    if (abs(coord[0]-bad_coord[0])<=1 and abs(coord[1]-bad_coord[1])<=1):
+                    if (abs(coord[0]-bad_coord[0]) + abs(coord[1]-bad_coord[1]) == 1):
                         if [coord] not in neighbors:
                             neighbors.append([coord])
                             count +=1
