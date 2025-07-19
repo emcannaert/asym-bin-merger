@@ -4,27 +4,47 @@ import pytest
 from asym_bin_merger import AsymBinMerger
 
 test_cases_with_bottom_left_origin = {
-    "TC1_one_bad_bin_center": {
+    "test1": {
         "bin_contents": np.array(
-            [[20, 20, 20], [20, 1, 20], [20, 20, 20]]
+            [[100, 200, 300], [400, 1, 500], [600, 700, 800]]
         ),  # row 0 = bottom
-        "superbin_labels": np.array([[0, 1, 2], [3, 6, 4], [5, 6, 7]]),
+        "merged_content": np.array([[100, 201, 300], [400, 201, 500], [600, 700, 800]]),
     },
-    "TC5_snake_bad_path": {
-        "bin_contents": np.array([[50, 1, 50], [1, 1, 1], [50, 1, 50]]),
-        "superbin_labels": np.array([[0, 3, 1], [3, 3, 3], [2, 3, 3]]),
+    "test2": {
+        "bin_contents": np.array([[1, 100, 150], [50, 1000, 300], [200, 250, 350]]),
+        "merged_content": np.array([[51, 100, 150], [51, 1000, 300], [200, 250, 350]]),
     },
-    "TC6_corner_spill": {
-        "bin_contents": np.array([[25, 2, 25], [2, 1, 2], [25, 2, 25]]),
-        "superbin_labels": np.array([[0, 3, 1], [3, 3, 3], [2, 3, 3]]),
+    "test3": {
+        "bin_contents": np.array([[1, 50, 150], [50, 1000, 300], [200, 250, 350]]),
+        "merged_content": np.array([[51, 51, 150], [50, 1000, 300], [200, 250, 350]]),
     },
-    "TC7_uniform_low_3x3": {
-        "bin_contents": np.array([[10, 10, 10], [10, 10, 10], [10, 10, 10]]),
-        "superbin_labels": np.array([[1, 0, 0], [1, 2, 2], [1, 3, 3]]),
+    "test4": {
+        "bin_contents": np.array([[999, 999, 999], [999, 1, 999], [999, 999, 999]]),
+        "merged_content": np.array(
+            [[999, 1000, 999], [999, 1000, 999], [999, 999, 999]]
+        ),
     },
-    "TC8_bad_ring_around_good_center": {
-        "bin_contents": np.array([[2, 2, 2], [2, 20, 2], [2, 2, 2]]),
-        "superbin_labels": np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]]),
+    "test5": {
+        "bin_contents": np.array([[999, 999, 999], [999, 1, 999], [999, 999, 999]]),
+        "merged_content": np.array(
+            [[999, 1000, 999], [999, 1000, 999], [999, 999, 999]]
+        ),
+    },
+    "test6": {
+        "bin_contents": np.array([[1000, 2, 50], [1000, 5, 10], [1000, 1000, 1000]]),
+        "merged_content": np.array(
+            [[1000, 17, 50], [1000, 17, 17], [1000, 1000, 1000]]
+        ),
+    },
+    "test7": {
+        "bin_contents": np.array([[1000, 2, 50], [1000, 5, 5], [1000, 1000, 1000]]),
+        "merged_content": np.array(
+            [[1000, 62, 62], [1000, 62, 62], [1000, 1000, 1000]]
+        ),
+    },
+    "test8": {
+        "bin_contents": np.array([[1, 2, 3], [5, 1000, 6], [4, 3, 2]]),
+        "merged_content": np.array([[26, 26, 26], [26, 1000, 26], [26, 26, 26]]),
     },
 }
 
@@ -36,6 +56,7 @@ def test_bin_merging(name, case):
         max_stat_uncert=0.25,
         output_dir="bin_maps/",
         debug=True,
+        verbose=True,
     )
     merger.run()
-    np.testing.assert_array_equal(merger._get_merged_hist(), case["superbin_labels"])
+    np.testing.assert_array_equal(merger._get_merged_hist(), case["merged_content"])

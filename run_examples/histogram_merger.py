@@ -7,7 +7,7 @@ r_file = ROOT.TFile.Open("./random_test_hist.root", "READ")
 hist = r_file.Get("random")  # Ensure it's a TH2F
 
 # Merge with max stat uncertainty of 10%
-bin_merger = AsymBinMerger(hist, 0.12, "randomized_hist")
+bin_merger = AsymBinMerger(hist, 0.12, "randomized_hist", False, False)
 
 # Retrieve outputs
 bin_merger.write_output()
@@ -19,19 +19,18 @@ r_file = ROOT.TFile.Open("./radial_test_hist.root", "READ")
 hist = r_file.Get("radial")  # Ensure it's a TH2F
 
 # Merge with max stat uncertainty of 10%
-bin_merger = AsymBinMerger(hist, 0.14, "radial_hist")
+bin_merger = AsymBinMerger(hist, 0.14, "radial_hist", False, False)
 
 # Retrieve outputs
 bin_merger.write_output()
 bin_merger.merged_hist_to_image()
-
 
 # Open ROOT file and retrieve histogram
 r_file = ROOT.TFile.Open("./quarter_radial_test_hist.root", "READ")
 hist = r_file.Get("quarter_radial")  # Ensure it's a TH2F
 
 # Merge with max stat uncertainty of 10%
-bin_merger = AsymBinMerger(hist, 0.15, "quarter_radial_hist")
+bin_merger = AsymBinMerger(hist, 0.15, "quarter_radial_hist", False, False)
 
 # Retrieve outputs
 bin_merger.write_output()

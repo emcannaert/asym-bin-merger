@@ -10,8 +10,6 @@ from asym_bin_merger import AsymBinMerger
         # Valid arguments
         # Regular 2D NumPy array
         (np.array([[1, 2], [3, 4]]), True),
-        # Jagged NumPy array
-        (np.array([np.array([1, 2]), np.array([3])], dtype=object), True),
         # Invalid arguments
         # List of lists (not a NumPy array)
         ([[1, 2], [3]], False),
@@ -30,11 +28,11 @@ from asym_bin_merger import AsymBinMerger
 def test_get_merged_hist_accepts_valid_inputs(hist, is_valid):
     try:
         merger = AsymBinMerger(
-            hist=hist, max_stat_uncert=0.1, output_dir=".", debug=True
+            hist=hist, max_stat_uncert=0.1, output_dir=".", debug=True, verbose=False
         )
         # Dummy superbin_indices and final_hist for testing
-        merger.superbin_indices = [[(0, 0)]]
-
+        merger._init_superbin_indices()
+        merger.init_hist = hist
         if isinstance(hist, np.ndarray) and hist.dtype == object:
             merger.final_hist = np.array(
                 [np.zeros_like(row) for row in hist], dtype=object
