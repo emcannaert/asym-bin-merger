@@ -1,5 +1,6 @@
-from asym_bin_merger import AsymBinMerger
 import ROOT
+
+from asym_bin_merger import AsymBinMerger
 
 # Open ROOT file and retrieve histogram
 r_file = ROOT.TFile.Open("./random_test_hist.root", "READ")

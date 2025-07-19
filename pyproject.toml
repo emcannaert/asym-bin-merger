@@ -74,7 +74,6 @@ exclude_lines = [
 [tool.ruff]
 line-length = 88
 target-version = "py39"
-extend-select = ["B", "I", "RUF", "UP"]  # Adds Bugbear, isort, Ruff-specific, PyUpgrade
 
 [tool.ruff.lint]
 extend-select = ["E", "F", "W", "B", "I", "RUF", "UP"]
@@ -82,5 +81,3 @@ extend-select = ["E", "F", "W", "B", "I", "RUF", "UP"]
 [tool.black]
 line-length = 88
 target-version = ["py39"]
-
-

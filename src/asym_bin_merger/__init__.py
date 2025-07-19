@@ -23,10 +23,9 @@ Usage:
 
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import ROOT
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 
 
 class AsymBinMerger:
@@ -43,7 +42,9 @@ class AsymBinMerger:
             if self.hist.ndim == 2:
                 self.final_hist = np.zeros_like(self.hist)
             elif self.hist.ndim == 1 and self.hist.dtype == object:
-                self.final_hist = np.array([np.zeros_like(row) for row in self.hist], dtype=object)
+                self.final_hist = np.array(
+                    [np.zeros_like(row) for row in self.hist], dtype=object
+                )
             else:
                 self.final_hist = None
         else:
@@ -56,7 +57,7 @@ class AsymBinMerger:
         if not debug:
             print("Running AsymBinMerger in normal mode.")
             self.run()
-            #self._write_output()
+            # self._write_output()
         else:
             print("Running in debug mode.")
 
@@ -90,7 +91,6 @@ class AsymBinMerger:
             self.final_hist = hist_array
             return self.final_hist
         else:
-
             raise TypeError(
                 "`hist` must be a ROOT.TH2 object or a numpy array in debug mode."
             )
@@ -126,37 +126,57 @@ class AsymBinMerger:
         self.superbin_indices = superbins
         return superbins
 
-    def _check_superbins(self): # check whether there are problems with final superbins
+    def _check_superbins(self):  # check whether there are problems with final superbins
         print("Checking bin map for issues.")
 
         # Check if superbin_indices is a list of lists
         if not all(isinstance(superbin, list) for superbin in self.superbin_indices):
             raise TypeError("superbin_indices must be a list of lists.")
-        
-        # Check if there are any empty superbins    
-        # This is a simple check, but it can be extended to more complex checks if needed
-        empty_superbins = [superbin for superbin in self.superbin_indices if not superbin]
+
+        # Check if there are any empty superbins
+        # This is a simple check, but it can be extended
+        # to more complex checks if needed
+        empty_superbins = [
+            superbin for superbin in self.superbin_indices if not superbin
+        ]
         if empty_superbins:
-            print(f"Warning: Found {len(empty_superbins)} empty superbins. These will be ignored in the merging process.")
+            print(
+                f"Warning: Found {len(empty_superbins)} empty superbins. "
+                f"These will be ignored in the merging process."
+            )
             # Optionally, remove empty superbins from the list
-            self.superbin_indices = [superbin for superbin in self.superbin_indices if superbin]
-        
+            self.superbin_indices = [
+                superbin for superbin in self.superbin_indices if superbin
+            ]
+
         # check if there are any issues with the superbin indices
         if not self.superbin_indices:
-            raise Exception("No superbins initialized. Please run _init_superbin_indices() first.")
-        
+            raise Exception(
+                "No superbins initialized. Please run _init_superbin_indices() first."
+            )
+
         # Check if all bins in superbin_indices are valid
         for superbin in self.superbin_indices:
             for bin_index in superbin:
                 if self.debug:
                     # In debug mode, assume hist is a numpy array
-                    if not (0 <= bin_index[0] < self.hist.shape[0] and 0 <= bin_index[1] < self.hist.shape[1]):
-                        raise Exception(f"Invalid bin index {bin_index} in superbin {superbin}.")
+                    if not (
+                        0 <= bin_index[0] < self.hist.shape[0]
+                        and 0 <= bin_index[1] < self.hist.shape[1]
+                    ):
+                        raise Exception(
+                            f"Invalid bin index {bin_index} in superbin {superbin}."
+                        )
                 else:
                     # For ROOT histograms, check if the bin index is valid
-                    if not (1 <= bin_index[0] <= self.hist.GetNbinsX() and 1 <= bin_index[1] <= self.hist.GetNbinsY()):
-                        raise Exception(f"Invalid bin index {bin_index} in superbin {superbin}.")
-                    
+                    if not (
+                        1 <= bin_index[0] <= self.hist.GetNbinsX()
+                        and 1 <= bin_index[1] <= self.hist.GetNbinsY()
+                    ):
+                        raise Exception(
+                            f"Invalid bin index {bin_index} in superbin {superbin}."
+                        )
+
         print("Superbins check completed successfully. No issues found.")
         # If all checks pass, return successfully
         return
@@ -170,9 +190,8 @@ class AsymBinMerger:
         while len(bad_bin_indices) > 0:
             # get largest stat uncert superbin number
             bad_bin_num = bad_bin_nums[0]
-            bad_bin = bad_bin_indices[0]
 
-            # get list of neighbors 
+            # get list of neighbors
             bad_neighbor_nums = self._get_neighbor_bins(bad_bin_num)
 
             if not bad_neighbor_nums:
@@ -182,12 +201,14 @@ class AsymBinMerger:
                     with superbins indices {self.superbin_indices}."
                 )
 
-            
-            bad_neighbor_superbin = bad_neighbor_nums[0]  # This is a list of coordinates
+            bad_neighbor_superbin = bad_neighbor_nums[
+                0
+            ]  # This is a list of coordinates
             try:
                 bad_neighbor_num = self.superbin_indices.index(bad_neighbor_superbin)
             except ValueError:
-                # Fallback: find the superbin that contains all coordinates of bad_neighbor_superbin
+                # Fallback: find the superbin that contains
+                # all coordinates of bad_neighbor_superbin
                 found = False
                 for idx, superbin in enumerate(self.superbin_indices):
                     if all(coord in superbin for coord in bad_neighbor_superbin):
@@ -195,11 +216,16 @@ class AsymBinMerger:
                         found = True
                         break
                 if not found:
-                    print(f"Warning: Neighbor superbin {bad_neighbor_superbin} not found in current superbin_indices. Skipping this merge.")
+                    print(
+                        f"Warning: Neighbor superbin {bad_neighbor_superbin} not found "
+                        f"in current superbin_indices. Skipping this merge."
+                    )
                     it_num += 1
                     continue  # Skip this iteration
-            self.superbin_indices[bad_neighbor_num].extend(self.superbin_indices[bad_bin_num])
-            
+            self.superbin_indices[bad_neighbor_num].extend(
+                self.superbin_indices[bad_bin_num]
+            )
+
             # remove bad bin from superbin indices
             self.superbin_indices.pop(bad_bin_num)
 
@@ -210,27 +236,32 @@ class AsymBinMerger:
 
         return
 
-    def write_output(self): 
+    def write_output(self):
         """
         Writes bin map to self.output_file
         Raises:
-            Exception: If no superbins are initialized or if the output directory does not exist.
+            Exception: If no superbins are initialized or
+            if the output directory does not exist.
         """
         # Check if output directory is set
         if self.output_dir is None:
-            raise ValueError("Output directory is not set. Please provide a valid output directory.")
-        
+            raise ValueError(
+                "Output directory is not set. Please provide a valid output directory."
+            )
+
         # Check if superbin_indices is empty
         if not self.superbin_indices:
-            raise Exception("No superbins to write. Please run _run_bin_merging() first.")
+            raise Exception(
+                "No superbins to write. Please run _run_bin_merging() first."
+            )
         # Check if output directory exists, create it if not
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
-        
+
         # Write the superbin indices to the output file
-        with open(self.output_file, 'w') as f:
+        with open(self.output_file, "w") as f:
             f.write(str(self.superbin_indices))
-        print("Writing output to %s."%(self.output_file))
+        print(f"Writing output to {self.output_file}.")
 
         return
 
@@ -239,13 +270,13 @@ class AsymBinMerger:
         self.superbin_indices = self._init_superbin_indices()
         self._run_bin_merging()
         self._check_superbins()
-        #self._write_output()
+        # self._write_output()
         print("Bin merging completed successfully.")
-        #self._merged_hist_to_image()
+        # self._merged_hist_to_image()
 
     ## Helper functions
 
-    def _print_help(self): # give information about usage
+    def _print_help(self):  # give information about usage
         """
         Print usage instructions for the AsymBinMerger utility.
         """
@@ -262,15 +293,27 @@ class AsymBinMerger:
         print("  max_stat_uncert  : Required. A float indicating the maximum allowed")
         print("                     relative statistical uncertainty per bin.")
         print("  output_dir       : Optional. Directory where output bin map is saved.")
-        print("                     Defaults to current working directory if not provided.")
-        print("  debug            : Optional. If True, skips main execution for testing (default: False).")
+        print(
+            "                     Defaults to current working "
+            "directory if not provided."
+        )
+        print(
+            "  debug            : Optional. If True, skips main execution "
+            "for testing (default: False)."
+        )
         print()
         print("Output:")
-        print("  - merger.write_output: A text file 'bin_map.txt' is written to output_dir.")
+        print(
+            "  - merger.write_output: A text file 'bin_map.txt' "
+            "is written to output_dir."
+        )
         print("  - It contains the final binning map in the form:")
         print("      [ [ (x1, y1), (x2, y2), ... ], [ ... ], ... ]")
         print("    where each sublist represents a merged 'superbin'.")
-        print("  - merger.merged_hist_to_image: Output a matplotlib image of the merged histogram.")
+        print(
+            "  - merger.merged_hist_to_image: Output a matplotlib "
+            "image of the merged histogram."
+        )
         print()
         print("Usage Example:")
         print("  merger = AsymBinMerger(hist=my_hist, max_stat_uncert=0.1,")
@@ -336,8 +379,12 @@ class AsymBinMerger:
                     if total_superbin_value > 0
                     else 0
                 )
-                centroid_x = np.mean([bin_index[0] for bin_index in self.superbin_indices[index]])
-                centroid_y = np.mean([bin_index[1] for bin_index in self.superbin_indices[index]])
+                centroid_x = np.mean(
+                    [bin_index[0] for bin_index in self.superbin_indices[index]]
+                )
+                centroid_y = np.mean(
+                    [bin_index[1] for bin_index in self.superbin_indices[index]]
+                )
                 # Distance from center of histogram (x,y) value:
                 center_x = self.hist.shape[0] // 2
                 center_y = self.hist.shape[1] // 2
@@ -347,7 +394,13 @@ class AsymBinMerger:
                 )
                 # Append to bad_bins list
                 bad_bins.append(
-                    (total_stat_uncert, central_distance, centroid_x, centroid_y, superbin)
+                    (
+                        total_stat_uncert,
+                        central_distance,
+                        centroid_x,
+                        centroid_y,
+                        superbin,
+                    )
                 )
             # Sort by total_stat_uncert (descending)
             # then central distance (closest to center of histogram),
@@ -431,7 +484,6 @@ class AsymBinMerger:
         superbins = self.superbin_indices
         bad_superbin = self.superbin_indices[bad_bin_num]
 
-
         neighbors = []
         neighbor_counts = []
 
@@ -443,10 +495,10 @@ class AsymBinMerger:
             # loop over coordinates of each bin within superbin
             for coord in superbin:
                 for bad_coord in bad_superbin:
-                    if (abs(coord[0]-bad_coord[0]) + abs(coord[1]-bad_coord[1]) == 1):
+                    if abs(coord[0] - bad_coord[0]) + abs(coord[1] - bad_coord[1]) == 1:
                         if [coord] not in neighbors:
                             neighbors.append([coord])
-                            count +=1
+                            count += 1
 
             if count > 0:
                 neighbor_counts.append(count)
@@ -493,24 +545,30 @@ class AsymBinMerger:
             for bin_index in superbin:
                 if self.debug:
                     # In debug mode, assume hist is a numpy array
-                    print(f"  Bin index: {bin_index} (value: {self.hist[bin_index[0], bin_index[1]]})")
+                    print(
+                        f"  Bin index: {bin_index} \
+                        (value: {self.hist[bin_index[0], bin_index[1]]})"
+                    )
                 else:
                     # For ROOT histograms, use GetBinContent
                     value = self.hist.GetBinContent(bin_index[0], bin_index[1])
                     print(f"  Bin index: {bin_index} (value: {value})")
-        print("End of bin map.") 
+        print("End of bin map.")
         return
 
     ## Getters and setters
 
-    def get_bin_map(self) -> list: # external getter for superbin indices list 
+    def get_bin_map(self) -> list:  # external getter for superbin indices list
         # Looks at the output file and returns the bin map as a list.
         if os.path.exists(self.output_file):
-            with open(self.output_file, 'r') as f:
+            with open(self.output_file) as f:
                 bin_map = eval(f.read())
             return bin_map
         else:
-            raise FileNotFoundError(f"Output file {self.output_file} does not exist. Please run write_output() first.")
+            raise FileNotFoundError(
+                f"Output file {self.output_file} does not exist. \
+                Please run write_output() first."
+            )
 
     def get_superbin_centroids(self) -> list:  # return list of superbin centroids
         centroids = []
@@ -540,8 +598,12 @@ class AsymBinMerger:
             if not isinstance(self.hist, np.ndarray):
                 raise TypeError("In debug mode, `hist` must be a numpy array.")
             if not (
-                (self.hist.ndim == 2) or
-                (self.hist.ndim == 1 and self.hist.dtype == object and all(isinstance(row, np.ndarray) for row in self.hist))
+                (self.hist.ndim == 2)
+                or (
+                    self.hist.ndim == 1
+                    and self.hist.dtype == object
+                    and all(isinstance(row, np.ndarray) for row in self.hist)
+                )
             ):
                 raise TypeError("In debug mode, `hist` must be a numpy array.")
         else:
@@ -555,25 +617,38 @@ class AsymBinMerger:
     def _get_merged_hist(self):  # testing: return np.array version of post-merge hist
         # from self.superbin_indices, get a new histogram in np.array format
         if not isinstance(self.hist, (np.ndarray, ROOT.TH2)):
-            raise TypeError("`hist` must be a numpy array in debug mode or a ROOT.TH2 object.")
+            raise TypeError(
+                "`hist` must be a numpy array in debug mode or a ROOT.TH2 object."
+            )
         if self.debug:
             if self.hist.ndim == 2:
                 pass  # regular 2D array
-            elif self.hist.ndim == 1 and self.hist.dtype == object and all(isinstance(row, np.ndarray) for row in self.hist):
+            elif (
+                self.hist.ndim == 1
+                and self.hist.dtype == object
+                and all(isinstance(row, np.ndarray) for row in self.hist)
+            ):
                 pass  # jagged array
             else:
-                raise ValueError("In debug mode, hist must be a 2D numpy array or a jagged array (dtype=object, 1D array of arrays).")
+                raise ValueError(
+                    "In debug mode, hist must be a 2D numpy array or "
+                    "a jagged array (dtype=object, 1D array of arrays)."
+                )
                 raise ValueError("In debug mode, `hist` cannot be an empty array.")
         else:
             if not isinstance(self.hist, ROOT.TH2):
                 raise TypeError("`hist` must be a ROOT.TH2 object.")
             if self.hist.GetNbinsX() <= 0 or self.hist.GetNbinsY() <= 0:
-                raise ValueError("`hist` must have positive number of bins in both dimensions.")
+                raise ValueError(
+                    "`hist` must have positive number of bins in both dimensions."
+                )
             if self.hist.GetEntries() == 0:
                 raise ValueError("`hist` cannot be an empty ROOT histogram.")
-            
+
         if not self.superbin_indices:
-            print("No superbins initialized. Please run _init_superbin_indices() first.")
+            print(
+                "No superbins initialized. Please run _init_superbin_indices() first."
+            )
             return []
         merged_hist = np.zeros_like(self.final_hist)
         for superbin in self.superbin_indices:
@@ -581,11 +656,17 @@ class AsymBinMerger:
                 if self.debug:
                     # In debug mode, assume hist is a numpy array
                     if self.hist.ndim == 2:
-                # Regular 2D array
-                        if 0 <= bin_index[0] < merged_hist.shape[0] and 0 <= bin_index[1] < merged_hist.shape[1]:
-                            merged_hist[bin_index[0], bin_index[1]] += self.hist[bin_index[0], bin_index[1]]
+                        # Regular 2D array
+                        if (
+                            0 <= bin_index[0] < merged_hist.shape[0]
+                            and 0 <= bin_index[1] < merged_hist.shape[1]
+                        ):
+                            merged_hist[bin_index[0], bin_index[1]] += self.hist[
+                                bin_index[0], bin_index[1]
+                            ]
                     elif self.hist.ndim == 1 and self.hist.dtype == object:
-                        # Jagged array: merged_hist and self.hist are 1D arrays of arrays
+                        # Jagged array: merged_hist and self.hist
+                        #  are 1D arrays of arrays
                         row, col = bin_index
                         if (
                             0 <= row < len(merged_hist)
@@ -594,32 +675,39 @@ class AsymBinMerger:
                         ):
                             merged_hist[row][col] += self.hist[row][col]
                     else:
-                    # Skip invalid bin
+                        # Skip invalid bin
                         continue
                 else:
                     # For ROOT histograms, use GetBinContent
-                    if 1 <= bin_index[0] <= self.hist.GetNbinsX() and 1 <= bin_index[1] <= self.hist.GetNbinsY():
-                        merged_hist[bin_index[0]-1, bin_index[1]-1] += self.hist.GetBinContent(bin_index[0], bin_index[1])
+                    if (
+                        1 <= bin_index[0] <= self.hist.GetNbinsX()
+                        and 1 <= bin_index[1] <= self.hist.GetNbinsY()
+                    ):
+                        merged_hist[
+                            bin_index[0] - 1, bin_index[1] - 1
+                        ] += self.hist.GetBinContent(bin_index[0], bin_index[1])
                     else:
                         # Skip invalid bin
                         continue
         return merged_hist
-    
-    def merged_hist_to_image(self): # testing: plot merged histogram as an image
+
+    def merged_hist_to_image(self):  # testing: plot merged histogram as an image
         """
         Take the identified superbins, plot a 2D histogram plot
         with each superbin represented as a single bin and unique color
         """
         if not self.superbin_indices:
-            print("No superbins initialized. Please run _init_superbin_indices() first.")
+            print(
+                "No superbins initialized. Please run _init_superbin_indices() first."
+            )
             return
-        
+
         if self.debug:
             shape = self.hist.shape
         else:
             shape = (self.hist.GetNbinsX(), self.hist.GetNbinsY())
         label_map = np.full(shape, -1, dtype=int)  # -1 for unassigned bins
-        #plot the merged histogram
+        # plot the merged histogram
         for superbin_idx, superbin in enumerate(self.superbin_indices):
             for bin_index in superbin:
                 if self.debug:
@@ -629,11 +717,11 @@ class AsymBinMerger:
                 else:
                     x, y = bin_index
                     if 1 <= x <= shape[0] and 1 <= y <= shape[1]:
-                        label_map[x-1, y-1] = superbin_idx
+                        label_map[x - 1, y - 1] = superbin_idx
         if label_map.size == 0:
             print("Merged histogram is empty. Cannot plot.")
             return
-        
+
         all_bins = set((x, y) for x in range(shape[0]) for y in range(shape[1]))
         assigned_bins = set()
         for superbin in self.superbin_indices:
@@ -641,31 +729,44 @@ class AsymBinMerger:
                 if self.debug:
                     assigned_bins.add(bin_index)
                 else:
-                    assigned_bins.add((bin_index[0]-1, bin_index[1]-1))
+                    assigned_bins.add((bin_index[0] - 1, bin_index[1] - 1))
         missing_bins = all_bins - assigned_bins
         if missing_bins:
-            print(f"Warning: {len(missing_bins)} bins are not assigned to any superbin: {missing_bins}")
+            print(
+                f"Warning: {len(missing_bins)} bins are not assigned \
+                to any superbin: {missing_bins}"
+            )
 
         from matplotlib.colors import ListedColormap
-        import matplotlib.patches as patches
 
         n_superbins = len(self.superbin_indices)
-        base_cmap = plt.get_cmap('tab20')
-        colors = base_cmap.colors if n_superbins <= 20 else plt.cm.get_cmap('tab20b', n_superbins).colors
+        base_cmap = plt.get_cmap("tab20")
+        colors = (
+            base_cmap.colors
+            if n_superbins <= 20
+            else plt.cm.get_cmap("tab20b", n_superbins).colors
+        )
         cmap = ListedColormap(colors[:n_superbins])
 
         plt.figure(figsize=(10, 8))
-        plt.imshow(label_map, cmap=cmap, interpolation='nearest', origin='lower',)
-        plt.title('Merged Histogram with Superbins')
-        plt.xlabel('X-axis')
-        plt.ylabel('Y-axis')
+        plt.imshow(
+            label_map,
+            cmap=cmap,
+            interpolation="nearest",
+            origin="lower",
+        )
+        plt.title("Merged Histogram with Superbins")
+        plt.xlabel("X-axis")
+        plt.ylabel("Y-axis")
         plt.xticks(ticks=np.arange(shape[1]), labels=np.arange(shape[1]))
         plt.yticks(ticks=np.arange(shape[0]), labels=np.arange(shape[0]))
         plt.grid(False)
 
         annotated_bins = set()
-        for superbin_idx, superbin in enumerate(self.superbin_indices):
-            coords = [(b[0], b[1]) if self.debug else (b[0]-1, b[1]-1) for b in superbin]
+        for superbin in self.superbin_indices:
+            coords = [
+                (b[0], b[1]) if self.debug else (b[0] - 1, b[1] - 1) for b in superbin
+            ]
             first_y, first_x = coords[0]
             if (first_y, first_x) in annotated_bins:
                 continue  # Skip duplicate annotation
@@ -673,19 +774,27 @@ class AsymBinMerger:
             if self.debug:
                 total_value = sum(self.hist[y, x] for y, x in coords)
             else:
-                total_value = sum(self.hist.GetBinContent(y+1, x+1) for y, x in coords)
+                total_value = sum(
+                    self.hist.GetBinContent(y + 1, x + 1) for y, x in coords
+                )
             stat_uncert = (np.sqrt(total_value) / total_value) if total_value > 0 else 0
-            plt.text(first_x, first_y, f"{stat_uncert:.2f}", color='black',
-                    ha='center', va='center', fontsize=10, fontweight='bold')
+            plt.text(
+                first_x,
+                first_y,
+                f"{stat_uncert:.2f}",
+                color="black",
+                ha="center",
+                va="center",
+                fontsize=10,
+                fontweight="bold",
+            )
 
-
-        plt.savefig(os.path.join(self.output_dir, 'merged_histogram.png'))
+        plt.savefig(os.path.join(self.output_dir, "merged_histogram.png"))
         plt.show()
         plt.close()
         print("Merged histogram plotted successfully.")
         # Save the plot
-        print("Merged histogram saved as 'merged_histogram.png' in the output directory.")
-        return       
-
-
-    
+        print(
+            "Merged histogram saved as 'merged_histogram.png' in the output directory."
+        )
+        return

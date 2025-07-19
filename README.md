@@ -87,7 +87,7 @@ Stored in the `output_dir` (e.g. `"merged_hist"`):
 
 ## Installation
 
-This package uses [`uv`](https://github.com/astral-sh/uv) for environment and dependency management. 
+This package uses [`uv`](https://github.com/astral-sh/uv) for environment and dependency management.
 
 > **Note:** `ROOT` must be installed **separately** on your system (e.g., via [conda](https://root.cern/install/) or prebuilt binaries). This tool **requires** a working Python-compatible ROOT environment (`import ROOT` must work).
 
@@ -110,7 +110,7 @@ uv venv
 source .venv/bin/activate
 
 # Install Python dependencies
-uv pip install -r requirements.txt
+uv sync
 ```
 
 
@@ -143,10 +143,10 @@ Generates plot and saves it in the output directory.
 
 ## FAQ
 
-**Q:** What happens if two bins have equal uncertainty and distance from the origin?  
-**A:** The algorithm prefers the bin with **larger x**, then **larger y** coordinate to ensure deterministic merging. This algorithm is therefore "x-biased". 
+**Q:** What happens if two bins have equal uncertainty and distance from the origin?
+**A:** The algorithm prefers the bin with **larger x**, then **larger y** coordinate to ensure deterministic merging. This algorithm is therefore "x-biased".
 
-**Q:** Can I use this with histograms that contain empty bins?  
+**Q:** Can I use this with histograms that contain empty bins?
 **A:** Yes. Empty bins (with zero entries) are treated as having infinite uncertainty and are prioritized for early merging.
 
 ---
