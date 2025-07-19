@@ -12,9 +12,8 @@ This is particularly useful for analyses that require high-statistics binning in
 - Respects 2D histogram topology using **adjacent neighbor merging**
 - "x-biased" tie-breaking ensures **deterministic, reproducible** results
 - Outputs:
-  - Post-merged `TH2F` histogram
-  - Superbin-to-bin mapping
-  - Diagnostic plots
+  - Superbin-to-bin map
+  - Diagnostic plot
 
 ---
 
@@ -54,15 +53,15 @@ from asym_bin_merger import AsymBinMerger
 import ROOT
 
 # Open ROOT file and retrieve histogram
-r_file = ROOT.TFile.Open("path_to_hist.root", "READ")
-hist = r_file.Get("my_histogram")  # Ensure it's a TH2F
+r_file = ROOT.TFile.Open("path/to/your/hist.root", "READ")
+hist = r_file.Get("my_hist")  # Ensure it's a TH2F
 
-# Merge with max stat uncertainty of 25%
-bin_merger = AsymBinMerger(hist, 0.25, "merged_hist")
+# Merge with max stat uncertainty of 12%
+bin_merger = AsymBinMerger(hist, 0.12, "my_hist")
 
 # Retrieve outputs
-merged_hist = bin_merger.run()
-superbin_indices = bin_merger.get_bin_map()
+bin_merger.write_output()
+bin_merger.merged_hist_to_image()
 
 ```
 
@@ -97,6 +96,7 @@ This package uses [`uv`](https://github.com/astral-sh/uv) for environment and de
 - `numpy`
 - `os` (standard library)
 - `ROOT` *(not installable via `uv`)*
+- `matplotlib` (for merged_hist_to_image)
 
 ### Setup Instructions
 
@@ -130,9 +130,13 @@ Returns the post-merged histogram.
 
 Returns the bin grouping (superbin) structure.
 
-### `.plot_merged_hist()`
+### `.write_output()`
 
-Generates plots and saves them in the output directory.
+Generates bin map and saves it in the output directory.
+
+### `.merged_hist_to_image()`
+
+Generates plot and saves it in the output directory.
 
 
 ---
