@@ -55,7 +55,7 @@ class AsymBinMerger:
         # run main workflow
         if not debug:
             print("Running AsymBinMerger in normal mode.")
-            #self._run()
+            self.run()
             #self._write_output()
         else:
             print("Running in debug mode.")
@@ -210,7 +210,7 @@ class AsymBinMerger:
 
         return
 
-    def _write_output(self): 
+    def write_output(self): 
         """
         Writes bin map to self.output_file
         Raises:
@@ -239,9 +239,9 @@ class AsymBinMerger:
         self.superbin_indices = self._init_superbin_indices()
         self._run_bin_merging()
         self._check_superbins()
-        self._write_output()
+        #self._write_output()
         print("Bin merging completed successfully.")
-        self._merged_hist_to_image()
+        #self._merged_hist_to_image()
 
     ## Helper functions
 
@@ -266,10 +266,11 @@ class AsymBinMerger:
         print("  debug            : Optional. If True, skips main execution for testing (default: False).")
         print()
         print("Output:")
-        print("  - A text file 'bin_map.txt' is written to output_dir.")
+        print("  - merger.write_output: A text file 'bin_map.txt' is written to output_dir.")
         print("  - It contains the final binning map in the form:")
         print("      [ [ (x1, y1), (x2, y2), ... ], [ ... ], ... ]")
         print("    where each sublist represents a merged 'superbin'.")
+        print("  - merger.merged_hist_to_image: Output a matplotlib image of the merged histogram.")
         print()
         print("Usage Example:")
         print("  merger = AsymBinMerger(hist=my_hist, max_stat_uncert=0.1,")
@@ -509,7 +510,7 @@ class AsymBinMerger:
                 bin_map = eval(f.read())
             return bin_map
         else:
-            raise FileNotFoundError(f"Output file {self.output_file} does not exist. Please run _write_output() first.")
+            raise FileNotFoundError(f"Output file {self.output_file} does not exist. Please run write_output() first.")
 
     def get_superbin_centroids(self) -> list:  # return list of superbin centroids
         centroids = []
@@ -604,7 +605,7 @@ class AsymBinMerger:
                         continue
         return merged_hist
     
-    def _merged_hist_to_image(self): # testing: plot merged histogram as an image
+    def merged_hist_to_image(self): # testing: plot merged histogram as an image
         """
         Take the identified superbins, plot a 2D histogram plot
         with each superbin represented as a single bin and unique color
@@ -662,27 +663,19 @@ class AsymBinMerger:
         plt.yticks(ticks=np.arange(shape[0]), labels=np.arange(shape[0]))
         plt.grid(False)
 
-        ax = plt.gca()
+        annotated_bins = set()
         for superbin_idx, superbin in enumerate(self.superbin_indices):
-            # Get all bin coordinates for this superbin
             coords = [(b[0], b[1]) if self.debug else (b[0]-1, b[1]-1) for b in superbin]
-            xs = [c[1] for c in coords]
-            ys = [c[0] for c in coords]
-            # Draw a rectangle around the bounding box of the superbin
-            #min_x, max_x = min(xs), max(xs)
-            #min_y, max_y = min(ys), max(ys)
-            #rect = patches.Rectangle((min_x-0.5, min_y-0.5), max_x-min_x+1, max_y-min_y+1,
-            #                        linewidth=2, edgecolor='black', facecolor='none')
-            #ax.add_patch(rect)
-            # Annotate centroid with stat uncertainty
-            centroid_x = int(np.mean(xs))
-            centroid_y = int(np.mean(ys))
+            first_y, first_x = coords[0]
+            if (first_y, first_x) in annotated_bins:
+                continue  # Skip duplicate annotation
+            annotated_bins.add((first_y, first_x))
             if self.debug:
                 total_value = sum(self.hist[y, x] for y, x in coords)
             else:
                 total_value = sum(self.hist.GetBinContent(y+1, x+1) for y, x in coords)
             stat_uncert = (np.sqrt(total_value) / total_value) if total_value > 0 else 0
-            plt.text(centroid_x, centroid_y, f"{stat_uncert:.2f}", color='black',
+            plt.text(first_x, first_y, f"{stat_uncert:.2f}", color='black',
                     ha='center', va='center', fontsize=10, fontweight='bold')
 
 
