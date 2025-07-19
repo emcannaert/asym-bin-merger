@@ -14,18 +14,13 @@ simple_neighbor_cases = {
             [(1, 0)],
             [(1, 2)],
             [(2, 1)],
-            [(0, 0)],
-            [(0, 2)],
-            [(2, 0)],
-            [(2, 2)],
         ],
     },
     "TC2_neighbors_higher": {
         "bin_contents": np.array([[10, 10, 10], [10, 1, 10], [10, 10, 10]]),
         "expected_neighbors_for_bin_4": [
             # Target Bin (1,1) is surrounded by same-valued bins, each in separate superbin
-            [(0,0)], [(0,1)], [(0,2)], [(1,0)],
-            [(1,2)], [(2,0)], [(2,1)], [(2,2)]
+            [(0, 1)], [(1, 0)], [(1, 2)], [(2, 1)]
         ]
 
     },
@@ -33,8 +28,7 @@ simple_neighbor_cases = {
         "bin_contents": np.array([[1, 1, 1], [1, 10, 1], [1, 1, 1]]),
         "expected_neighbors_for_bin_4": [
             # Target Bin (1,1) is surrounded by same-valued bins, but high values this time
-            [(0,0)], [(0,1)], [(0,2)], [(1,0)],
-            [(1,2)], [(2,0)], [(2,1)], [(2,2)]
+            [(0, 1)], [(1, 0)], [(1, 2)], [(2, 1)]
         ]
     }
 
@@ -45,13 +39,13 @@ edge_cases = {
         #Target bin is in corner
         "bin_contents": np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
         "target_bin": (0, 0),
-        "expected_neighbors": [[(0, 1)], [(1, 0)], [(1, 1)]],
+        "expected_neighbors": [[(0, 1)], [(1, 0)]],
     },
     "TC5_edge_bin_neighbors": {
         # Target bin is on non-corner edge
         "bin_contents": np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
         "target_bin": (1, 2),
-        "expected_neighbors": [[(0, 1)], [(0, 2)], [(1, 1)], [(2, 1)], [(2, 2)]],
+        "expected_neighbors": [[(0, 2)], [(1, 1)], [(2, 2)]],
     },
 }
 
@@ -61,9 +55,10 @@ stress_cases = {
         "bin_contents": np.pad(np.ones((3, 3)), pad_width=3, mode='constant', constant_values=5),
         "target_bin": (4, 4),
         "expected_neighbors": [
-            [(3, 3)], [(3, 4)], [(3, 5)],
-            [(4, 3)],           [(4, 5)],
-            [(5, 3)], [(5, 4)], [(5, 5)],
+            [(3, 4)],
+            [(4, 3)],
+            [(4, 5)],
+            [(5, 4)],
         ],
     },
     "TC7_high_values_3x3": {
@@ -75,9 +70,7 @@ stress_cases = {
         ]),
         "target_bin": (1, 1),
         "expected_neighbors": [
-            [(0, 0)], [(0, 1)], [(0, 2)],
-            [(1, 0)],           [(1, 2)],
-            [(2, 0)], [(2, 1)], [(2, 2)],
+            [(0, 1)], [(1, 0)], [(1, 2)], [(2, 1)],
         ],
     },
     "TC8_isolated_high_center": {
@@ -89,9 +82,7 @@ stress_cases = {
         ]),
         "target_bin": (1, 1),
         "expected_neighbors": [
-            [(0, 0)], [(0, 1)], [(0, 2)],
-            [(1, 0)],           [(1, 2)],
-            [(2, 0)], [(2, 1)], [(2, 2)],
+            [(0, 1)], [(1, 0)], [(1, 2)], [(2, 1)],
         ],
     }
 }
